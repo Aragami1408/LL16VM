@@ -22,16 +22,20 @@ typedef enum {
 } cpu_registers_t;
 
 typedef struct {
-	u8 memory[256];
+	u8 memory[256*256];
 	u16 registers[CPU_REG_COUNT];	
 } cpu_t;
 
 cpu_t *cpu_init(u8 *writable_bytes, int nbytes);
 
 void cpu_debug(cpu_t *cpu);
+void cpu_viewMemoryAt(cpu_t *cpu, u16 address);
 
 u8 cpu_fetch(cpu_t *cpu);
 u16 cpu_fetch16(cpu_t *cpu);
+
+u16 cpu_memRead16(cpu_t *cpu, u16 address);
+void cpu_memWrite16(cpu_t *cpu, u16 address, u16 data);
 
 void cpu_execute(cpu_t *cpu, u8 instruction);
 void cpu_step(cpu_t *cpu);
