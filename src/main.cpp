@@ -212,6 +212,8 @@ int main(int argc, char **argv) {
 		SDL_RenderPresent(renderer);
 	}
 
+	cpu_free(cpu);
+
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();

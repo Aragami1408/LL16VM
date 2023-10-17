@@ -33,6 +33,12 @@ void cpu_reset(cpu_t *cpu) {
 	cpu->stackframe_size = 0;
 }
 
+void cpu_free(cpu_t *cpu) {
+	free(cpu->memory);
+	free(cpu->registers);
+	free(cpu);
+}
+
 u8 cpu_fetch(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
 	const u8 instruction = cpu->memory[next_instruction_address];

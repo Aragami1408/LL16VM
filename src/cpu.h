@@ -38,6 +38,7 @@ typedef struct {
 
 cpu_t *cpu_init(u8 *writable_bytes, int nbytes);
 void cpu_reset(cpu_t *cpu);
+void cpu_free(cpu_t *cpu);
 
 void cpu_debug(cpu_t *cpu);
 void cpu_viewMemoryAt(cpu_t *cpu, u16 address);
