@@ -25,7 +25,7 @@ UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
 CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
-CXXFLAGS += -ggdb -Wall -Wformat -Wcast-align=strict -Wno-logical-op-parentheses -Wconversion -std=c++11
+CXXFLAGS += -ggdb -Wall -Wformat -Wcast-align -Wno-logical-op-parentheses -Wconversion -std=c++11
 LIBS =
 
 ##---------------------------------------------------------------------
