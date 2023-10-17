@@ -1,2 +1,4 @@
-LL16VM
+LL16VM64
 *.o
+.DS_Store
+.vscode/

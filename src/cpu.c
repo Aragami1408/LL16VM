@@ -2,10 +2,6 @@
 #include "base_helper.h"
 #include "instructions.h"
 
-static inline unsigned int __cpu_fetch_registerIndex(cpu_t *cpu) {
-
-}
-
 cpu_t *cpu_init(u8 *writable_bytes, int nbytes) {
 	cpu_t *cpu = (cpu_t *) malloc(sizeof(cpu_t));
 
