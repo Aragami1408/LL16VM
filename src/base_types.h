@@ -15,11 +15,13 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+
 #if OS_MAC == 1
 	#include <stddef.h>
 #endif
 
-typedef size_t usize;
+typedef uintptr_t usize;
+typedef intptr_t isize;
 
 typedef i8 b8;
 typedef i16 b16;

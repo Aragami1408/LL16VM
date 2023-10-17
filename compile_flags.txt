@@ -1,0 +1,12 @@
+-Wall 
+-Wformat 
+-Wcast-align=strict 
+-Wno-logical-op-parentheses 
+-Wconversion
+
+-Iexternals/
+-Iexternals/imgui
+-Iexternals/imgui/backends
+
+-I/usr/local/include 
+-I/usr/local/include/SDL2 

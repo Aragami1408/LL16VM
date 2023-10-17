@@ -14,19 +14,18 @@
 CXX = g++
 #CXX = clang++
 
-EXE = LL16VM
-IMGUI_DIR = imgui
+EXE = LL16VM64
 INC_DIR = src
-SOURCES = $(INC_DIR)/main.c
-SOURCES += $(INC_DIR)/cpu.c
+IMGUI_DIR = externals/imgui/
+SOURCES = $(INC_DIR)/main.cpp $(INC_DIR)/cpu.c
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer2.cpp
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
 CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
-CXXFLAGS += -g -Wall -Wformat
+CXXFLAGS += -ggdb -Wall -Wformat -Wcast-align=strict -Wno-logical-op-parentheses -Wconversion -std=c++11
 LIBS =
 
 ##---------------------------------------------------------------------
@@ -55,7 +54,7 @@ endif
 ifeq ($(UNAME_S), Darwin) #APPLE
 	ECHO_MESSAGE = "Mac OS X"
 	LIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo `sdl2-config --libs`
-	LIBS += -L/usr/local/lib -L/opt/local/lib
+	LIBS += -L/usr/local/lib
 
 	CXXFLAGS += `sdl2-config --cflags`
 	CXXFLAGS += -I/usr/local/include -I/opt/local/include
