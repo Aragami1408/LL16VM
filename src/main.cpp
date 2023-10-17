@@ -13,64 +13,26 @@
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
 #endif
 
-void run_code() {
-	u8 writable_bytes[] = {
-		// mov $5151, r1
-		MOV_LIT_REG,
-		0x51,
-		0x51,
-		CPU_REG_R1,
-		// mov $4242, 42
-		MOV_LIT_REG,
-		0x42,
-		0x42,
-		CPU_REG_R2,
+void draw_memory_at(cpu_t *cpu, u16 address, int rows = 10, int cols = 1) {
 
-		// psh r1
-		PSH_REG,
-		CPU_REG_R1,
-		// psh r2
-		PSH_REG,
-		CPU_REG_R2,
-
-		// pop r1
-		POP,
-		CPU_REG_R1,
-		// pop r2
-		POP,
-		CPU_REG_R2,
-
-	};
-
-	cpu_t *cpu = cpu_init(writable_bytes, ArrayCount(writable_bytes));
-
-	cpu_debug(cpu);
-	cpu_viewMemoryAt(cpu, cpu->registers[CPU_REG_IP]);
-	cpu_viewMemoryAt(cpu, 0xffff - 1 - 6);
-
-	char c;
-	while (1) {
-		c = (char)getchar();
-		if (c == '\n') {
-			cpu_step(cpu);
-			cpu_debug(cpu);
-			cpu_viewMemoryAt(cpu, cpu->registers[CPU_REG_IP]);
-			cpu_viewMemoryAt(cpu, 0xffff - 1 - 6);
-		}
-		else if (c == 'q')
-		break;
-
-		while (getchar() != '\n');
-	}
-}
-
-void view_memory_at(cpu_t *cpu, u16 address, int lines = 1) {
-
-	for(int i = 0; i < lines; i++) {
+	for(int i = 0; i < cols; i++) {
 		ImGui::Text("0x%04X: ", address);
 		ImGui::SameLine();
-		for(int j = 0; j < 10; j++) {
+		for(int j = 0; j < rows; j++) {
 			ImGui::Text("0x%02X", cpu->memory[address++]);
+			ImGui::SameLine();
+		}	
+		ImGui::Text("\n");
+	}	
+}
+
+void draw_stack(cpu_t *cpu, int rows = 10, int cols = 1) {
+	u16 address = 0xffff;
+	for(int i = 0; i < cols; i++) {
+		ImGui::Text("0x%04X: ", address);
+		ImGui::SameLine();
+		for(int j = 0; j < rows; j++) {
+			ImGui::Text("0x%02X", cpu->memory[address--]);
 			ImGui::SameLine();
 		}	
 		ImGui::Text("\n");
@@ -89,7 +51,7 @@ int main(int argc, char **argv) {
 #endif
 
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-	SDL_Window *window = SDL_CreateWindow("Low Level 16-bit Virtual Machine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+	SDL_Window *window = SDL_CreateWindow("Low Level 16-bit Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 	if (renderer == nullptr) {
 		SDL_Log("Error creating SDL_Renderer!");
@@ -110,36 +72,78 @@ int main(int argc, char **argv) {
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.0f);
 
 	bool done = false;
-	u8 writable_bytes[] = {
-		// mov $5151, r1
+
+	const u16 subroutine_address = 0x3000;
+	u8 writable_bytes[256*256] = {
+		// psh 0x3333
+		PSH_LIT,
+		0x33,
+		0x33,
+		// psh 0x2222
+		PSH_LIT,
+		0x22,
+		0x22,
+		// psh 0x1111
+		PSH_LIT,
+		0x11,
+		0x11,
+
+		// mov 0x1234, r1
 		MOV_LIT_REG,
-		0x51,
-		0x51,
+		0x12,
+		0x34,
 		CPU_REG_R1,
-		// mov $4242, 42
+
+		// mov 0x5678, r4
 		MOV_LIT_REG,
-		0x42,
-		0x42,
-		CPU_REG_R2,
+		0x56,
+		0x78,
+		CPU_REG_R4,
 
-		// psh r1
-		PSH_REG,
-		CPU_REG_R1,
-		// psh r2
-		PSH_REG,
-		CPU_REG_R2,
+		// psh 0x0000
+		PSH_LIT,
+		0x00,
+		0x00,
 
-		// pop r1
-		POP,
-		CPU_REG_R1,
-		// pop r2
-		POP,
-		CPU_REG_R2,
+		// cal subroutine_address:
+		CAL_LIT,
+		(subroutine_address & 0xff00) >> 8,
+		(subroutine_address & 0x00ff),
 
+		// psh 0x4444
+		PSH_LIT,
+		0x44,
+		0x44,
 	};
 
-	cpu_t *cpu = cpu_init(writable_bytes, ArrayCount(writable_bytes));
+	int current_address = subroutine_address;
+	// psh 0x0102
+	writable_bytes[current_address++] = PSH_LIT;
+	writable_bytes[current_address++] = 0x01;
+	writable_bytes[current_address++] = 0x02;
+	// psh 0x0304
+	writable_bytes[current_address++] = PSH_LIT;
+	writable_bytes[current_address++] = 0x03;
+	writable_bytes[current_address++] = 0x04;
+	// psh 0x0506
+	writable_bytes[current_address++] = PSH_LIT;
+	writable_bytes[current_address++] = 0x05;
+	writable_bytes[current_address++] = 0x06;
+	// mov 0x0708, r1
+	writable_bytes[current_address++] = MOV_LIT_REG;
+	writable_bytes[current_address++] = 0x07;
+	writable_bytes[current_address++] = 0x08;
+	writable_bytes[current_address++] = CPU_REG_R1;
+	// mov 0x090A, r8
+	writable_bytes[current_address++] = MOV_LIT_REG;
+	writable_bytes[current_address++] = 0x09;
+	writable_bytes[current_address++] = 0x0A;
+	writable_bytes[current_address++] = CPU_REG_R8;
+	// ret
+	writable_bytes[current_address++] = RET;
+	
 
+	cpu_t *cpu = cpu_init(writable_bytes, ArrayCount(writable_bytes));
 	while (!done) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -155,35 +159,40 @@ int main(int argc, char **argv) {
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("CPU Registers");
-			ImGui::Text("IP: 0x%04X\n", cpu->registers[CPU_REG_IP]);
-			ImGui::Text("ACC: 0x%04X\n", cpu->registers[CPU_REG_ACC]);
-			ImGui::Text("R1: 0x%04X\n", cpu->registers[CPU_REG_R1]);
-			ImGui::Text("R2: 0x%04X\n", cpu->registers[CPU_REG_R2]);
-			ImGui::Text("R3: 0x%04X\n", cpu->registers[CPU_REG_R3]);
-			ImGui::Text("R4: 0x%04X\n", cpu->registers[CPU_REG_R4]);
-			ImGui::Text("R5: 0x%04X\n", cpu->registers[CPU_REG_R5]);
-			ImGui::Text("R6: 0x%04X\n", cpu->registers[CPU_REG_R6]);
-			ImGui::Text("R7: 0x%04X\n", cpu->registers[CPU_REG_R7]);
-			ImGui::Text("R8: 0x%04X\n", cpu->registers[CPU_REG_R8]);
-			ImGui::Text("SP: 0x%04X\n", cpu->registers[CPU_REG_SP]);
-			ImGui::Text("FP: 0x%04X\n", cpu->registers[CPU_REG_FP]);
+			ImGui::Begin("CPU Debugger");
+				ImGui::SeparatorText("CPU REGISTERS:");
+				ImGui::BulletText("IP: 0x%04X\n", cpu->registers[CPU_REG_IP]);
+				ImGui::BulletText("ACC: 0x%04X\n", cpu->registers[CPU_REG_ACC]);
+				ImGui::BulletText("R1: 0x%04X\n", cpu->registers[CPU_REG_R1]);
+				ImGui::BulletText("R2: 0x%04X\n", cpu->registers[CPU_REG_R2]);
+				ImGui::BulletText("R3: 0x%04X\n", cpu->registers[CPU_REG_R3]);
+				ImGui::BulletText("R4: 0x%04X\n", cpu->registers[CPU_REG_R4]);
+				ImGui::BulletText("R5: 0x%04X\n", cpu->registers[CPU_REG_R5]);
+				ImGui::BulletText("R6: 0x%04X\n", cpu->registers[CPU_REG_R6]);
+				ImGui::BulletText("R7: 0x%04X\n", cpu->registers[CPU_REG_R7]);
+				ImGui::BulletText("R8: 0x%04X\n", cpu->registers[CPU_REG_R8]);
+				ImGui::BulletText("SP: 0x%04X\n", cpu->registers[CPU_REG_SP]);
+				ImGui::BulletText("FP: 0x%04X\n", cpu->registers[CPU_REG_FP]);
+
+				ImGui::SeparatorText("INSTRUCTIONS:");
+				draw_memory_at(cpu, cpu->registers[CPU_REG_IP], 10, 5);					
+
+				ImGui::SeparatorText("STACK:");
+				// draw_memory_at(cpu, 0xffff - 1 - 42, 44);					
+				draw_stack(cpu, 10, 5);
+
+				ImGui::SeparatorText("COMMANDS:");
+				bool step_btn = ImGui::Button("Step");
+				ImGui::SetItemTooltip("You can also press [Spacebar]");	
+				if (step_btn) {
+					cpu_step(cpu);
+				}
+				
 			ImGui::End();
 		}
 
-		{
-			ImGui::Begin("Memory");
-				view_memory_at(cpu, cpu->registers[CPU_REG_IP]);					
-			ImGui::End();
-		}
 
-		{
-			ImGui::Begin("Stack");
-				view_memory_at(cpu, 0xffff - 1 - 6);					
-			ImGui::End();
-		}
-
-	ImGui::Render();
+		ImGui::Render();
 		SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
 		SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
 		SDL_RenderClear(renderer);

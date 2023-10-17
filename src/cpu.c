@@ -22,30 +22,6 @@ cpu_t *cpu_init(u8 *writable_bytes, int nbytes) {
 	return cpu;
 }
 
-void cpu_debug(cpu_t *cpu) {
-	printf("IP: 0x%04X\n", cpu->registers[CPU_REG_IP]); 
-	printf("ACC: 0x%04X\n", cpu->registers[CPU_REG_ACC]); 
-	printf("R1: 0x%04X\n", cpu->registers[CPU_REG_R1]); 
-	printf("R2: 0x%04X\n", cpu->registers[CPU_REG_R2]); 
-	printf("R3: 0x%04X\n", cpu->registers[CPU_REG_R3]); 
-	printf("R4: 0x%04X\n", cpu->registers[CPU_REG_R4]); 
-	printf("R5: 0x%04X\n", cpu->registers[CPU_REG_R5]); 
-	printf("R6: 0x%04X\n", cpu->registers[CPU_REG_R6]); 
-	printf("R7: 0x%04X\n", cpu->registers[CPU_REG_R7]); 
-	printf("R8: 0x%04X\n", cpu->registers[CPU_REG_R8]); 
-	printf("SP: 0x%04X\n", cpu->registers[CPU_REG_SP]); 
-	printf("FP: 0x%04X\n", cpu->registers[CPU_REG_FP]); 
-	printf("\n");
-}
-
-void cpu_viewMemoryAt(cpu_t *cpu, u16 address) {
-	printf("0x%04X: ", address);
-	for(int i = 0; i < 8; i++) 
-		printf("0x%02X ", cpu->memory[address+i]);	
-
-	printf("\n");
-}
-
 u8 cpu_fetch(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
 	const u8 instruction = cpu->memory[next_instruction_address];
@@ -108,7 +84,7 @@ u16 cpu_stackPop(cpu_t *cpu) {
 
 void cpu_stackPopState(cpu_t *cpu) {
 	const u16 fp_address = cpu->registers[CPU_REG_FP];
-	cpu->registers[CPU_REG_FP] = fp_address;
+	cpu->registers[CPU_REG_SP] = fp_address;
 
 	cpu->stackframe_size = cpu_stackPop(cpu);
 	const u16 stackframe_size = cpu->stackframe_size;
