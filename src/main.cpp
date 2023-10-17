@@ -152,6 +152,12 @@ int main(int argc, char **argv) {
 				done = true;
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
 				done = true;
+			if (event.type == SDL_KEYDOWN) {
+				if (event.key.keysym.sym == SDLK_SPACE) 
+					cpu_step(cpu);
+				else if (event.key.keysym.sym == SDLK_r)
+					cpu_reset(cpu);
+			}
 		}
 
 		ImGui_ImplSDLRenderer2_NewFrame();
@@ -187,6 +193,12 @@ int main(int argc, char **argv) {
 				if (step_btn) {
 					cpu_step(cpu);
 				}
+				ImGui::SameLine();
+				bool reset_btn = ImGui::Button("Reset");
+				ImGui::SetItemTooltip("You can also press [R]");	
+				if (reset_btn) {
+					cpu_reset(cpu);
+				}	
 				
 			ImGui::End();
 		}
