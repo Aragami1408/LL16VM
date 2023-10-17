@@ -20,4 +20,6 @@ static const u8 CAL_LIT = 0x5E;
 static const u8 CAL_REG = 0x5F;
 
 static const u8 RET = 0x60;
+
+static const u8 HLT = 0xFF;
 #endif

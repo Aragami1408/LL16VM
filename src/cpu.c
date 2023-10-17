@@ -14,12 +14,23 @@ cpu_t *cpu_init(u8 *writable_bytes, int nbytes) {
 		cpu->memory[i] = writable_bytes[i];
 	}
 
-	cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1 - 1;
-	cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1 - 1;
+	cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1;
+	cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1;
 
 	cpu->stackframe_size = 0;
+	cpu->is_halt = false;
 
 	return cpu;
+}
+
+void cpu_reset(cpu_t *cpu) {
+	for(int i = 0; i < CPU_REG_COUNT; i++) {
+		cpu->registers[i] = 0;
+	}
+
+	cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1 - 1;
+	cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1 - 1;
+	cpu->stackframe_size = 0;
 }
 
 u8 cpu_fetch(cpu_t *cpu) {
@@ -173,10 +184,25 @@ void cpu_execute(cpu_t *cpu, u8 instruction) {
 		case RET: {
 			cpu_stackPopState(cpu);	
 		} break;
+		case HLT: {
+			cpu->is_halt = true;
+		} break;
 	}
 }
 
 void cpu_step(cpu_t *cpu) {
 	u8 instruction = cpu_fetch(cpu);
-	cpu_execute(cpu, instruction);
+	return cpu_execute(cpu, instruction);
+}
+
+void cpu_run(cpu_t *cpu) {
+	cpu_step(cpu);
+	if (!cpu->is_halt) {
+		#if OS_WINDOWS == 1
+			Sleep(100);
+		#else
+			usleep(100*1000);
+		#endif
+		cpu_run(cpu);	
+	}	
 }

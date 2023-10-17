@@ -5,6 +5,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+#if OS_WINDOWS == 1
+	#include <windows.h>
+#else
+	#include <unistd.h>
+#endif
 
 typedef enum {
 	CPU_REG_IP = 0,
@@ -25,10 +32,12 @@ typedef enum {
 typedef struct {
 	u8 memory[256*256];
 	u16 registers[CPU_REG_COUNT];	
-	u16  stackframe_size;
+	u16 stackframe_size;
+	bool is_halt;	
 } cpu_t;
 
 cpu_t *cpu_init(u8 *writable_bytes, int nbytes);
+void cpu_reset(cpu_t *cpu);
 
 void cpu_debug(cpu_t *cpu);
 void cpu_viewMemoryAt(cpu_t *cpu, u16 address);
@@ -46,5 +55,6 @@ void cpu_stackPopState(cpu_t *cpu);
 
 void cpu_execute(cpu_t *cpu, u8 instruction);
 void cpu_step(cpu_t *cpu);
+void cpu_run(cpu_t *cpu);
 
 #endif
