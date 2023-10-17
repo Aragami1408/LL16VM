@@ -1,4 +1,5 @@
 LL16VM64
+LL16VM64.exe
 *.o
 .DS_Store
 .vscode/
