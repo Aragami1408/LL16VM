@@ -194,14 +194,8 @@ void cpu_step(cpu_t *cpu) {
 }
 
 void cpu_run(cpu_t *cpu) {
-	u32 milliseconds = 100; // it is hardcoded for now
 	cpu_step(cpu);
 	if (!cpu->is_halt) {
-		#if OS_WINDOWS == 1
-			Sleep(milliseconds);
-		#else
-			usleep(milliseconds*1000);
-		#endif
 		cpu_run(cpu);	
 	}	
 }

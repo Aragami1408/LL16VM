@@ -8,12 +8,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#if OS_WINDOWS == 1
-	#include <windows.h>
-#else
-	#include <unistd.h>
-#endif
-
 typedef enum {
 	CPU_REG_IP = 0,
 	CPU_REG_ACC,

@@ -25,7 +25,6 @@ typedef struct memmapper_region {
 
 typedef struct memmapper {
     memmapper_region_t regions[DEVICE_COUNT];
-    int region_count;
 } memmapper_t;
 
 memmapper_t *memmapper_create();

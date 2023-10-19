@@ -7,6 +7,8 @@ typedef struct {
     // it's empty for now
 } screen_device_t;
 
+screen_device_t screen_device_init();
+
 u16 screen_device_readU16(screen_device_t *self, u16 address);
 u8 screen_device_readU8(screen_device_t *self, u16 address);
 

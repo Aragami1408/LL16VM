@@ -23,12 +23,11 @@ void memmapper_map(
     region.start = start;
     region.end = end;
     region.remap = remap;
-    self->regions[self->region_count] = region;
-    self->region_count++;
+    self->regions[region.type] = region;
 }
 
 memmapper_region_t *memmapper_findRegion(memmapper_t *self, u16 address) {
-    for (int i = 0; i < self->region_count; i++) {
+    for (int i = DEVICE_COUNT - 1; i >= 0; i--) {
         memmapper_region_t *region = &self->regions[i];
         if (address >= region->start && address <= region->end)
         {
