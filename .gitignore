@@ -3,3 +3,5 @@ LL16VM64.exe
 *.o
 .DS_Store
 .vscode/
+.codechecker/
+src/.DS_Store
