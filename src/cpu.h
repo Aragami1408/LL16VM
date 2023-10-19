@@ -2,6 +2,7 @@
 #define CPU_H
 
 #include "base_types.h"
+#include "memory_mapper.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,14 +31,13 @@ typedef enum {
 } cpu_registers_t;
 
 typedef struct {
-	u8 memory[256*256];
+	memmapper_t *memory;
 	u16 registers[CPU_REG_COUNT];	
 	u16 stackframe_size;
 	bool is_halt;	
 } cpu_t;
 
-cpu_t *cpu_init(u8 *writable_bytes, int nbytes);
-void cpu_reset(cpu_t *cpu);
+cpu_t *cpu_init(memmapper_t *memory);
 void cpu_free(cpu_t *cpu);
 
 void cpu_debug(cpu_t *cpu);
@@ -45,9 +45,6 @@ void cpu_viewMemoryAt(cpu_t *cpu, u16 address);
 
 u8 cpu_fetch(cpu_t *cpu);
 u16 cpu_fetch16(cpu_t *cpu);
-
-u16 cpu_memRead16(cpu_t *cpu, u16 address);
-void cpu_memWrite16(cpu_t *cpu, u16 address, u16 data);
 
 void cpu_stackPush(cpu_t *cpu, u16 value);
 void cpu_stackPushState(cpu_t *cpu);

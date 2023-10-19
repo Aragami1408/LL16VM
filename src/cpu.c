@@ -2,20 +2,28 @@
 #include "base_helper.h"
 #include "instructions.h"
 
-cpu_t *cpu_init(u8 *writable_bytes, int nbytes) {
+
+cpu_t *cpu_init(memmapper_t *memory) {
 	cpu_t *cpu = (cpu_t *) malloc(sizeof(cpu_t));
+
+	if(!cpu) {
+		exit(EXIT_FAILURE);
+	}
 
 	for(int i = 0; i < CPU_REG_COUNT; i++) {
 		cpu->registers[i] = 0;
 	}
 
 	// Loading instructions into the memory
-	for(int i = 0; i < nbytes; i++) {
-		cpu->memory[i] = writable_bytes[i];
-	}
+	// for(int i = 0; i < nbytes; i++) {
+	// 	cpu->memory[i] = writable_bytes[i];
+	// }
+	cpu->memory = memory;
 
-	cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1;
-	cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1;
+	// cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1 - 1;
+	// cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1 - 1;
+	cpu->registers[CPU_REG_SP] = 0xffff - 1;
+	cpu->registers[CPU_REG_FP] = 0xffff - 1;
 
 	cpu->stackframe_size = 0;
 	cpu->is_halt = false;
@@ -23,54 +31,35 @@ cpu_t *cpu_init(u8 *writable_bytes, int nbytes) {
 	return cpu;
 }
 
-void cpu_reset(cpu_t *cpu) {
-	for(int i = 0; i < CPU_REG_COUNT; i++) {
-		cpu->registers[i] = 0;
-	}
-
-	cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1 - 1;
-	cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1 - 1;
-	cpu->stackframe_size = 0;
-}
-
 void cpu_free(cpu_t *cpu) {
-	free(cpu->memory);
-	free(cpu->registers);
+	// free(cpu->memory);
+	// free(cpu->registers);
 	free(cpu);
 }
 
 u8 cpu_fetch(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
-	const u8 instruction = cpu->memory[next_instruction_address];
+	// const u8 instruction = cpu->memory[next_instruction_address];
+	const u8 instruction = memmapper_readU8(cpu->memory, next_instruction_address);
 	cpu->registers[CPU_REG_IP] = next_instruction_address + 1;
 	return instruction;
 }
 
 u16 cpu_fetch16(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
-	const u16 ins_hi = cpu->memory[next_instruction_address];
-	const u16 ins_lo = cpu->memory[next_instruction_address + 1];
+	// const u16 ins_hi = cpu->memory[next_instruction_address];
+	// const u16 ins_lo = cpu->memory[next_instruction_address + 1];
+	const u8 ins_hi = memmapper_readU8(cpu->memory, next_instruction_address);
+	const u8 ins_lo = memmapper_readU8(cpu->memory, next_instruction_address + 1);
+	
 	cpu->registers[CPU_REG_IP] = next_instruction_address + 2;
 	return (u16) ((ins_hi << 8) | (ins_lo));
 }
 
-u16 cpu_memRead16(cpu_t *cpu, u16 address) {
-	u8 hi = cpu->memory[address];
-	u8 lo = cpu->memory[address + 1];
-
-	return (u16) ((hi << 8) | (lo));
-}
-
-void cpu_memWrite16(cpu_t *cpu, u16 address, u16 data) {
-	u8 hi = (u8) (data >> 8);	
-	u8 lo = (u8) (data & 0xff);
-	cpu->memory[address] = hi;
-	cpu->memory[address + 1] = lo;
-}
-
 void cpu_stackPush(cpu_t *cpu, u16 value) {
 	const u16 sp_address = cpu->registers[CPU_REG_SP];
-	cpu_memWrite16(cpu, sp_address, value);
+	// cpu_memWrite16(cpu, sp_address, value);
+	memmapper_writeU16(cpu->memory, sp_address, value);
 	cpu->registers[CPU_REG_SP] = sp_address - 2;
 	cpu->stackframe_size += 2;
 }
@@ -96,7 +85,7 @@ u16 cpu_stackPop(cpu_t *cpu) {
 	const u16 next_sp_address = cpu->registers[CPU_REG_SP] + 2;
 	cpu->registers[CPU_REG_SP] = next_sp_address;
 	cpu->stackframe_size -= 2;
-	return cpu_memRead16(cpu, next_sp_address);
+	return memmapper_readU16(cpu->memory, next_sp_address);
 }
 
 void cpu_stackPopState(cpu_t *cpu) {
@@ -139,14 +128,17 @@ void cpu_execute(cpu_t *cpu, u8 instruction) {
 		case MOV_REG_MEM: {
 			const u8 reg = cpu_fetch(cpu);
 			const u16 address = cpu_fetch16(cpu);
-			cpu_memWrite16(cpu, address, cpu->registers[reg]);
+			// cpu_memWrite16(cpu, address, cpu->registers[reg]);
+			memmapper_writeU16(cpu->memory, address, cpu->registers[reg]);
 		} break;
 		case MOV_MEM_REG: {
 			const u16 address = cpu_fetch16(cpu);
 			const u8 reg = cpu_fetch(cpu);
 
-			const u8 hi = cpu->memory[address];
-			const u8 lo = cpu->memory[address + 1];
+			// const u8 hi = cpu->memory[address];
+			// const u8 lo = cpu->memory[address + 1];
+			const u8 hi = memmapper_readU8(cpu->memory, address);
+			const u8 lo = memmapper_readU8(cpu->memory, address + 1);
 			cpu->registers[reg] = (u16) ((hi << 8) | (lo));
 		} break;
 		case ADD_REG_REG: {
@@ -202,12 +194,13 @@ void cpu_step(cpu_t *cpu) {
 }
 
 void cpu_run(cpu_t *cpu) {
+	u32 milliseconds = 100; // it is hardcoded for now
 	cpu_step(cpu);
 	if (!cpu->is_halt) {
 		#if OS_WINDOWS == 1
-			Sleep(100);
+			Sleep(milliseconds);
 		#else
-			usleep(100*1000);
+			usleep(milliseconds*1000);
 		#endif
 		cpu_run(cpu);	
 	}	
