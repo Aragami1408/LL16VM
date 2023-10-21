@@ -27,7 +27,6 @@ void screen_device_writeU16(screen_device_t *self, u16 address, u16 data) {
     const int y = (int) floor(address / 16); 
     moveTo(x*2, y);
     printf("%c\n", (char) character_value);
-    // printf("x=%d, y=%d, char=%c\n", x, y, character_value);
 }
 void screen_device_writeU8(screen_device_t *self, u16 address, u8 data) {
 
