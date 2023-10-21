@@ -311,23 +311,6 @@ void cpu_execute(cpu_t *cpu, u8 instruction) {
 				cpu->registers[CPU_REG_IP] = address;
 			}
 		} break;
-		case JNE_LIT: {
-			const u16 value = cpu_fetch16(cpu);
-			const u16 address = cpu_fetch16(cpu);
-			
-			if (value != cpu->registers[CPU_REG_ACC]) {
-				cpu->registers[CPU_REG_IP] = address;
-			}
-		} break;
-		case JNE_REG: {
-			const u8 r1 = cpu_fetch(cpu);
-			const u16 value = cpu->registers[r1];
-			const u16 address = cpu_fetch16(cpu);
-			
-			if(value != cpu->registers[CPU_REG_ACC]) {
-				cpu->registers[CPU_REG_IP] = address;
-			}
-		} break;
 		case JEQ_LIT: {
 			const u16 value = cpu_fetch16(cpu);
 			const u16 address = cpu_fetch16(cpu);
