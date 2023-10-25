@@ -1,0 +1,33 @@
+assembler : <mov> ;
+
+mov : "mov" <lit_reg> 
+    | "mov" <reg_reg>
+    | "mov" <reg_mem>
+    | "mov" <mem_reg>
+    | "mov" <lit_mem>
+    | "mov" <reg_ptr_reg>
+    | "mov" <lit_off_reg> ;
+
+lit : (<hex_literal> | <square_bracket_expr>) ;
+lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;
+reg_reg : <registers> ',' <registers> ;
+reg_mem : <registers> ',' (<address> | ('&' <square_bracket_expr>)) ;
+mem_reg : (<address> | <square_bracket_expr>) ',' <registers> ;
+lit_mem : (<hex_literal> | <square_bracket_expr>) ',' (<address> | <square_bracket_expr>) ;
+reg_ptr_reg : '&' <registers> ',' <registers> ;
+lit_off_reg : (<hex_literal> | <square_bracket_expr>) ',' '&' <registers> ',' <registers> ;
+
+hex_literal : '$' /[0-9A-Fa-f]+/ ;
+address : '&' /[0-9A-Fa-f]+/ ;
+
+square_bracket_expr : '[' <expr> ']' ;
+expr : <term> (('+' | '-') <term>)* ;
+term : <factor> ('*' <factor>)* ;
+factor : <hex_literal> | <variable> | '(' <expr> ')' ;
+
+variable : '!' /[a-zA-Z_][a-zA-Z1-9_]+/ ;
+
+registers : <gp_registers> | "ip" | "acc" | "sp" | "fp" ;
+gp_registers : /r[1-8]/ ;
+
+
