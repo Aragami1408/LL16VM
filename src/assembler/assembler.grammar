@@ -9,7 +9,13 @@ assembler : <mov>
     | <xor> 
     | <inc>
     | <dec> 
-    | <not> ;
+    | <not> 
+    | <jeq>
+    | <jne>
+    | <jlt>
+    | <jgt>
+    | <jle>
+    | <jge> ;
 
 mov : "mov" <lit_reg> 
     | "mov" <reg_reg>
@@ -46,6 +52,26 @@ xor : "xor" <reg_reg>
 inc : "inc" <registers> ;
 dec : "dec" <registers> ;
 not : "not" <registers> ;
+
+jeq : "jeq" <reg_mem> 
+    | "jeq" <lit_mem> ;
+
+jne : "jne" <reg_mem> 
+    | "jne" <lit_mem> ;
+
+jlt : "jlt" <reg_mem> 
+    | "jlt" <lit_mem> ;
+
+jgt : "jgt" <reg_mem> 
+    | "jgt" <lit_mem> ;
+    
+jle : "jle" <reg_mem> 
+    | "jle" <lit_mem> ;
+
+jge : "jge" <reg_mem> 
+    | "jge" <lit_mem> ;
+
+
 
 lit : (<hex_literal> | <square_bracket_expr>) ;
 lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;

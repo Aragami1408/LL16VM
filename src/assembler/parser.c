@@ -33,6 +33,12 @@ int main() {
 	mpc_parser_t *inc = mpc_new("inc");
 	mpc_parser_t *dec = mpc_new("dec");
 	mpc_parser_t *not = mpc_new("not");
+	mpc_parser_t *jeq = mpc_new("jeq");
+	mpc_parser_t *jne = mpc_new("jne");
+	mpc_parser_t *jlt = mpc_new("jlt");
+	mpc_parser_t *jgt = mpc_new("jgt");
+	mpc_parser_t *jle = mpc_new("jle");
+	mpc_parser_t *jge = mpc_new("jge");
 
 	mpc_parser_t *lit= mpc_new("lit");
 	mpc_parser_t *lit_reg = mpc_new("lit_reg");
@@ -71,6 +77,12 @@ int main() {
 					inc,
 					dec,
 					not,
+					jeq,
+					jne,
+					jlt,
+					jgt,
+					jle,
+					jge,
 
 					lit,
 					lit_reg,
@@ -126,6 +138,12 @@ int main() {
 	mpc_delete(inc);
 	mpc_delete(dec);
 	mpc_delete(not);
+	mpc_delete(jeq);
+	mpc_delete(jne);
+	mpc_delete(jlt);
+	mpc_delete(jgt);
+	mpc_delete(jle);
+	mpc_delete(jge);
 
 	mpc_delete(lit);
 	mpc_delete(lit_reg);
