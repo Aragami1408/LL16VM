@@ -22,6 +22,17 @@ int main() {
 	mpc_parser_t *assembler = mpc_new("assembler");
 
 	mpc_parser_t *mov = mpc_new("mov");
+	mpc_parser_t *add = mpc_new("add");
+	mpc_parser_t *sub = mpc_new("sub");
+	mpc_parser_t *mul = mpc_new("mul");
+	mpc_parser_t *lsf = mpc_new("lsf");
+	mpc_parser_t *rsf = mpc_new("rsf");
+	mpc_parser_t *and = mpc_new("and");
+	mpc_parser_t *or = mpc_new("or");
+	mpc_parser_t *xor = mpc_new("xor");
+	mpc_parser_t *inc = mpc_new("inc");
+	mpc_parser_t *dec = mpc_new("dec");
+	mpc_parser_t *not = mpc_new("not");
 
 	mpc_parser_t *lit= mpc_new("lit");
 	mpc_parser_t *lit_reg = mpc_new("lit_reg");
@@ -49,6 +60,17 @@ int main() {
 					assembler,
 
 					mov,
+					add,
+					sub,
+					mul,
+					lsf,
+					rsf,
+					and,
+					or,
+					xor,
+					inc,
+					dec,
+					not,
 
 					lit,
 					lit_reg,
@@ -93,6 +115,17 @@ int main() {
 	mpc_delete(assembler);
 
 	mpc_delete(mov);
+	mpc_delete(add);
+	mpc_delete(sub);
+	mpc_delete(mul);
+	mpc_delete(lsf);
+	mpc_delete(rsf);
+	mpc_delete(and);
+	mpc_delete(or);
+	mpc_delete(xor);
+	mpc_delete(inc);
+	mpc_delete(dec);
+	mpc_delete(not);
 
 	mpc_delete(lit);
 	mpc_delete(lit_reg);

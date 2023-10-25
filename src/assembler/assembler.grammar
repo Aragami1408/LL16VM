@@ -1,4 +1,15 @@
-assembler : <mov> ;
+assembler : <mov> 
+    | <add> 
+    | <sub> 
+    | <mul> 
+    | <lsf>
+    | <rsf> 
+    | <and> 
+    | <or> 
+    | <xor> 
+    | <inc>
+    | <dec> 
+    | <not> ;
 
 mov : "mov" <lit_reg> 
     | "mov" <reg_reg>
@@ -7,6 +18,34 @@ mov : "mov" <lit_reg>
     | "mov" <lit_mem>
     | "mov" <reg_ptr_reg>
     | "mov" <lit_off_reg> ;
+
+add : "add" <reg_reg> 
+    | "add" <lit_reg> ;
+
+sub : "sub" <reg_reg> 
+    | "sub" <lit_reg> ;
+
+mul : "mul" <reg_reg> 
+    | "mul" <lit_reg> ;
+
+lsf : "lsf" <reg_reg> 
+    | "lsf" <lit_reg> ;
+
+rsf : "rsf" <reg_reg> 
+    | "rsf" <lit_reg> ;
+
+and : "and" <reg_reg> 
+    | "and" <lit_reg> ;
+
+or : "or" <reg_reg> 
+    | "or" <lit_reg> ;
+
+xor : "xor" <reg_reg> 
+    | "xor" <lit_reg> ;
+
+inc : "inc" <registers> ;
+dec : "dec" <registers> ;
+not : "not" <registers> ;
 
 lit : (<hex_literal> | <square_bracket_expr>) ;
 lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;
