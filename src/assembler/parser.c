@@ -39,6 +39,11 @@ int main() {
 	mpc_parser_t *jgt = mpc_new("jgt");
 	mpc_parser_t *jle = mpc_new("jle");
 	mpc_parser_t *jge = mpc_new("jge");
+	mpc_parser_t *psh = mpc_new("psh");
+	mpc_parser_t *pop = mpc_new("pop");
+	mpc_parser_t *cal = mpc_new("cal");
+	mpc_parser_t *ret = mpc_new("ret");
+	mpc_parser_t *hlt = mpc_new("hlt");
 
 	mpc_parser_t *lit= mpc_new("lit");
 	mpc_parser_t *lit_reg = mpc_new("lit_reg");
@@ -83,6 +88,11 @@ int main() {
 					jgt,
 					jle,
 					jge,
+					psh,
+					pop,
+					cal,
+					ret,
+					hlt,
 
 					lit,
 					lit_reg,

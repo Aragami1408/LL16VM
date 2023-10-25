@@ -15,7 +15,12 @@ assembler : <mov>
     | <jlt>
     | <jgt>
     | <jle>
-    | <jge> ;
+    | <jge> 
+    | <psh>
+    | <pop> 
+    | <cal>
+    | <ret>
+    | <hlt> ;
 
 mov : "mov" <lit_reg> 
     | "mov" <reg_reg>
@@ -70,6 +75,17 @@ jle : "jle" <reg_mem>
 
 jge : "jge" <reg_mem> 
     | "jge" <lit_mem> ;
+
+psh : "psh" <lit> 
+    | "psh" <registers> ;
+
+pop : "pop" <registers> ;
+
+cal : "cal" <lit> 
+    | "cal" <registers> ;
+
+ret : "ret" ;
+hlt : "hlt" ;
 
 
 
