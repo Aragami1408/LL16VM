@@ -47,6 +47,7 @@ int main() {
 
 	mpc_parser_t *lit= mpc_new("lit");
 	mpc_parser_t *lit_reg = mpc_new("lit_reg");
+	mpc_parser_t *reg_lit = mpc_new("reg_lit");
 	mpc_parser_t *reg_reg = mpc_new("reg_reg");
 	mpc_parser_t *reg_mem = mpc_new("reg_mem");
 	mpc_parser_t *mem_reg = mpc_new("mem_reg");
@@ -96,6 +97,7 @@ int main() {
 
 					lit,
 					lit_reg,
+					reg_lit,
 					reg_reg,
 					reg_mem,
 					mem_reg,

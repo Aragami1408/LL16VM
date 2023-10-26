@@ -34,16 +34,19 @@ add : "add" <reg_reg>
     | "add" <lit_reg> ;
 
 sub : "sub" <reg_reg> 
-    | "sub" <lit_reg> ;
+    | "sub" <lit_reg> 
+    | "sub" <reg_lit> ;
 
 mul : "mul" <reg_reg> 
     | "mul" <lit_reg> ;
 
 lsf : "lsf" <reg_reg> 
-    | "lsf" <lit_reg> ;
+    | "lsf" <lit_reg> 
+    | "lsf" <reg_lit> ;
 
 rsf : "rsf" <reg_reg> 
-    | "rsf" <lit_reg> ;
+    | "rsf" <lit_reg> 
+    | "rsf" <reg_lit> ;
 
 and : "and" <reg_reg> 
     | "and" <lit_reg> ;
@@ -91,6 +94,7 @@ hlt : "hlt" ;
 
 lit : (<hex_literal> | <square_bracket_expr>) ;
 lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;
+reg_lit : <registers> ',' (<hex_literal> | <square_bracket_expr>) ;
 reg_reg : <registers> ',' <registers> ;
 reg_mem : <registers> ',' (<address> | ('&' <square_bracket_expr>)) ;
 mem_reg : (<address> | <square_bracket_expr>) ',' <registers> ;
