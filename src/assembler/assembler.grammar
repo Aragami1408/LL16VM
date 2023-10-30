@@ -41,18 +41,16 @@ mul : "mul" <reg_reg>
     | "mul" <lit_reg> ;
 
 lsf : "lsf" <reg_reg> 
-    | "lsf" <lit_reg> 
     | "lsf" <reg_lit> ;
 
 rsf : "rsf" <reg_reg> 
-    | "rsf" <lit_reg> 
     | "rsf" <reg_lit> ;
 
 and : "and" <reg_reg> 
-    | "and" <lit_reg> ;
+    | "and" <reg_lit> ;
 
 or : "or" <reg_reg> 
-    | "or" <lit_reg> ;
+    | "or" <reg_lit> ;
 
 xor : "xor" <reg_reg> 
     | "xor" <lit_reg> ;
