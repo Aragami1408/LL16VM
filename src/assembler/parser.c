@@ -1,28 +1,10 @@
-#include "mpc.h"
-#include "../base_helper.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifdef _WIN32
-
-static char buffer[2048];
-
-char* readline(char* prompt) {
-	fputs(prompt, stdout);
-	fgets(buffer, 2048, stdin);
-	char* cpy = malloc(strlen(buffer)+1);
-	strcpy(cpy, buffer);
-	cpy[strlen(cpy)-1] = '\0';
-	return cpy;
-}
-
-void add_history(char* unused) {}
-
-#else
-#include <editline/readline.h>
-#endif
+#include "mpc.h"
+#include "../base_helper.h"
 
 typedef enum {
 	LIT_REG,
@@ -474,7 +456,6 @@ void generate_machine_code(parser_instruction_t *inst, int *machine_code) {
 		} break;
 	}
 }
-
 
 int run_file(mpc_parser_t *parser, const char *filename) {
 
