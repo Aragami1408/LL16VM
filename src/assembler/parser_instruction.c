@@ -220,10 +220,6 @@ int __map_reg_to_num(const char *str) {
     return -1;
 }
 
-int __evaluate_square_bracket_expr(mpc_ast_t *ast) {
-
-}
-
 instruction_t *parse_instruction(mpc_parser_t *parser, const char *filename, const char *input) {
 
 	mpc_result_t r;
@@ -231,8 +227,8 @@ instruction_t *parse_instruction(mpc_parser_t *parser, const char *filename, con
 
 	if(mpc_parse(filename, input, parser, &r)) {
 		mpc_ast_t *ast = r.output;
-		mpc_ast_print(r.output);
-		mpc_ast_delete(r.output);
+		mpc_ast_print(ast);
+		mpc_ast_delete(ast);
 		printf("------------------------\n");
 		if (strstr(input, "ret") || strstr(input, "hlt")) {
 			strcpy(inst->mnemonic, ast->tag);

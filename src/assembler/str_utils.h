@@ -5,7 +5,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-int trim_whitespace(char *str);
+void trim_whitespace(char *str);
 
 char *str_replace(char *orig, char *rep, char *with);
 
