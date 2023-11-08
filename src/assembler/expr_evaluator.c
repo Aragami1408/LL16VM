@@ -132,33 +132,26 @@ void dfs_traversal(mpc_ast_t *node, token_list_t *token_list) {
 
 #define MATCH_CONTENT(str) strstr(node->contents, str)
 
-	printf("Tag: %s\n", node->tag);
-	printf("Contents: %s\n", node->contents);
 
 	if (MATCH_CONTENT("+") 
 	|| MATCH_CONTENT("-") 
 	|| MATCH_CONTENT("*")) {
 
-	    printf("\tFound operator. Contents: %s\n", node->contents);
 	    token.type = TOKEN_OP;
 	    token.op = node->contents[0];
 	    append_token(token_list, token);
 	}
 	else if (MATCH_CONTENT("(")) {
-	    printf("\tFound left parenthesis.\n");
 	    token.type = TOKEN_LPAREN;
 	    append_token(token_list, token);
 	}
 	else if (MATCH_CONTENT(")")) {
-	    printf("\tFound right parenthesis.\n");
 	    token.type = TOKEN_RPAREN;
 	    append_token(token_list, token);
 	}
 	else if (strcmp(node->contents, "") == 0 || MATCH_CONTENT("[") || MATCH_CONTENT("]") || MATCH_CONTENT("$")) {
-	    printf("\tFound other strings. Skip appending\n");
 	}
 	else {
-	    printf("\tFound literal. Contents: %s\n", node->contents);
 	    token.type = TOKEN_LITERAL;
 	    token.val = (int)strtol(node->contents, NULL, 16);
 	    append_token(token_list, token);
@@ -173,25 +166,19 @@ void dfs_traversal(mpc_ast_t *node, token_list_t *token_list) {
 
 void print_tokens(token_list_t *token_list) {
 	if (token_list == NULL) {
-		printf("Token list is empty\n");
 		return;
 	}
 
-	printf("Tokens:\n");
 	for (size_t i = 0; i < token_list->size; i++) {
 		token_t token = token_list->tokens[i];
 		switch (token.type) {
 			case TOKEN_LITERAL:
-				printf("Literal Token: %d\n", token.val);
 				break;
 			case TOKEN_OP:
-				printf("Operator Token: %c\n", token.op);
 				break;
 			case TOKEN_LPAREN:
-				printf("Left Parenthesis Token\n");
 				break;
 			case TOKEN_RPAREN:
-				printf("Right Parenthesis Token\n");
 				break;
 		}
 	}

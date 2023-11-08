@@ -49,7 +49,7 @@ int run_repl(mpc_parser_t *parser) {
 		printf("Machine Code: ");
 		for (int i = 0; i < inst->type_size; i++) {
 			if (machine_code[i] == -1) printf("failed ");
-			else printf("0x%02x ", machine_code[i]);
+			else printf("$%02x ", machine_code[i]);
 		}
 
 		printf("\n\n");
@@ -67,19 +67,11 @@ int run_repl_expr(mpc_parser_t *parser) {
 		mpc_result_t r;
 		if (mpc_parse("<stdin>", input, parser, &r)) {
 			mpc_ast_t *ast = r.output;
-			printf("-------------------------\n");
-			mpc_ast_print(ast);
-			printf("-------------------------\n");
 			token_list_t *token_list = create_token_list(10);
 			dfs_traversal(ast, token_list);
-			printf("-------------------------\n");
-			print_tokens(token_list);
-			printf("-------------------------\n");
 			token_list_t *rpn_tokens = infix_to_rpn(token_list);
-			print_tokens(rpn_tokens);
-			printf("-------------------------\n");
 			int result = evaluate_postfix(rpn_tokens);
-			printf("The result of the expression is: %02x\n", result);
+			printf("The result of the expression is: $%04x\n", result);
 			
 			free_token_list(rpn_tokens);
 			mpc_ast_delete(ast);
