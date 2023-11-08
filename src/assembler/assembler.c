@@ -5,9 +5,13 @@
 #include "mpc.h"
 #include "../base_helper.h"
 
+#include "utils.h"
+
 #include "instruction_parser.h"
 #include "instruction_evaluator.h"
-#include "utils.h"
+
+#include "expr_parser.h"
+
 
 int run_file(mpc_parser_t *parser, const char *filename) {
 
@@ -60,10 +64,7 @@ int main(int argc, char **argv) {
 	mpc_parser_t *address = mpc_new("address");
 
 	// Square bracket expression parsers
-	mpc_parser_t *square_bracket_expr = mpc_new("square_bracket_expr");
-	mpc_parser_t *expr = mpc_new("expr");
-	mpc_parser_t *term = mpc_new("term");
-	mpc_parser_t *factor = mpc_new("factor");
+	expr_parser_t *expr_parser = expr_parser_init();	
 
 	mpc_parser_t *variable = mpc_new("variable");
 
@@ -111,10 +112,10 @@ int main(int argc, char **argv) {
 			hex_literal,
 			address,
 
-			square_bracket_expr,
-			expr,
-			term,
-			factor,
+			expr_parser->square_bracket_expr,
+			expr_parser->expr,
+			expr_parser->term,
+			expr_parser->factor,
 
 			variable,
 
@@ -139,10 +140,7 @@ int main(int argc, char **argv) {
 	mpc_delete(hex_literal);
 	mpc_delete(address);
 
-	mpc_delete(square_bracket_expr);
-	mpc_delete(expr);
-	mpc_delete(term);
-	mpc_delete(factor);
+	expr_parser_free(expr_parser);
 
 	mpc_delete(variable);
 
