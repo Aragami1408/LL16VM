@@ -111,3 +111,182 @@ void free_eval_stack(eval_stack_t *stack) {
 	free(stack->stack);
 	free(stack);
 }
+
+int __operator_precedence(token_t operator) {
+	switch (operator.op) {
+		case '+':
+		case '-':
+			return 1;
+		case '*':
+			return 2;
+		default:
+			return 0;
+	}
+}
+
+void dfs_traversal(mpc_ast_t *node, token_list_t *token_list) {
+    if (node == NULL) return; // TODO: Error Handling
+			      
+    if (node->tag) {
+	token_t token = {0};
+
+#define MATCH_CONTENT(str) strstr(node->contents, str)
+
+	printf("Tag: %s\n", node->tag);
+	printf("Contents: %s\n", node->contents);
+
+	if (MATCH_CONTENT("+") 
+	|| MATCH_CONTENT("-") 
+	|| MATCH_CONTENT("*")) {
+
+	    printf("\tFound operator. Contents: %s\n", node->contents);
+	    token.type = TOKEN_OP;
+	    token.op = node->contents[0];
+	    append_token(token_list, token);
+	}
+	else if (MATCH_CONTENT("(")) {
+	    printf("\tFound left parenthesis.\n");
+	    token.type = TOKEN_LPAREN;
+	    append_token(token_list, token);
+	}
+	else if (MATCH_CONTENT(")")) {
+	    printf("\tFound right parenthesis.\n");
+	    token.type = TOKEN_RPAREN;
+	    append_token(token_list, token);
+	}
+	else if (strcmp(node->contents, "") == 0 || MATCH_CONTENT("[") || MATCH_CONTENT("]") || MATCH_CONTENT("$")) {
+	    printf("\tFound other strings. Skip appending\n");
+	}
+	else {
+	    printf("\tFound literal. Contents: %s\n", node->contents);
+	    token.type = TOKEN_LITERAL;
+	    token.val = (int)strtol(node->contents, NULL, 16);
+	    append_token(token_list, token);
+	}
+    }
+
+    for (int i = 0; i < node->children_num; i++) {
+		dfs_traversal(node->children[i], token_list);
+    }
+
+}
+
+void print_tokens(token_list_t *token_list) {
+	if (token_list == NULL) {
+		printf("Token list is empty\n");
+		return;
+	}
+
+	printf("Tokens:\n");
+	for (size_t i = 0; i < token_list->size; i++) {
+		token_t token = token_list->tokens[i];
+		switch (token.type) {
+			case TOKEN_LITERAL:
+				printf("Literal Token: %d\n", token.val);
+				break;
+			case TOKEN_OP:
+				printf("Operator Token: %c\n", token.op);
+				break;
+			case TOKEN_LPAREN:
+				printf("Left Parenthesis Token\n");
+				break;
+			case TOKEN_RPAREN:
+				printf("Right Parenthesis Token\n");
+				break;
+		}
+	}
+}
+
+token_list_t *infix_to_rpn(token_list_t *infix_tokens) {
+
+	token_list_t *rpn_tokens = create_token_list(infix_tokens->size);
+	operator_stack_t *operator_stack = create_operator_stack(infix_tokens->size);
+
+	for (size_t i = 0; i < infix_tokens->size; i++) {
+		token_t token = infix_tokens->tokens[i];
+
+		switch (token.type) {
+
+			case TOKEN_LITERAL:
+				append_token(rpn_tokens, token);
+				break;
+			case TOKEN_OP: {
+				token_t operator_peek = operator_stack->stack[operator_stack->top];
+
+				while (
+					(!is_operator_stack_empty(operator_stack))
+					&& (operator_peek.type != TOKEN_LPAREN) 
+					&& (__operator_precedence(operator_peek) >= __operator_precedence(token))) {
+
+						append_token(rpn_tokens, pop_operator(operator_stack));
+				}
+
+				push_operator(operator_stack, token);
+			} break;   
+			case TOKEN_LPAREN:
+				push_operator(operator_stack, token);
+			break;
+			case TOKEN_RPAREN: {
+				token_t operator_peek = operator_stack->stack[operator_stack->top];
+				while ((operator_peek.type != TOKEN_LPAREN) && !is_operator_stack_empty(operator_stack)) {
+					append_token(rpn_tokens, pop_operator(operator_stack));
+				}
+				if (operator_stack->stack[operator_stack->top].type == TOKEN_LPAREN) 
+					pop_operator(operator_stack);
+			} break;
+		}
+	}
+
+	while (!is_operator_stack_empty(operator_stack)) {
+		token_t op = pop_operator(operator_stack);
+		if (op.op != TOKEN_LPAREN)
+			append_token(rpn_tokens, op);
+	}
+
+	free_operator_stack(operator_stack);
+
+	return rpn_tokens;
+}
+
+int evaluate_postfix(token_list_t *postfix_tokens) {
+	eval_stack_t *eval_stack = create_eval_stack(postfix_tokens->size);
+
+	for (size_t i = 0; i < postfix_tokens->size; i++) {
+		token_t token = postfix_tokens->tokens[i];
+
+		switch (token.type) {
+			case TOKEN_LITERAL:
+				push_eval(eval_stack, token.val);
+			break;
+			case TOKEN_OP: {
+				int operand2 = pop_eval(eval_stack);
+				int operand1 = pop_eval(eval_stack);
+				int result;
+
+				switch (token.op) {
+					case '+':
+						result = operand1 + operand2;
+					break;
+					case '-':
+						result = operand1 - operand2;
+					break;
+					case '*':
+						result = operand1 * operand2;
+					break;
+				}
+
+				push_eval(eval_stack, result);
+			} break;
+			case TOKEN_LPAREN:
+			break;
+			case TOKEN_RPAREN:
+						   break;
+		}
+	}
+
+	int final_result = pop_eval(eval_stack);
+
+	free_eval_stack(eval_stack);
+
+	return final_result;
+}

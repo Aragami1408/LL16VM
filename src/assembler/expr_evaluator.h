@@ -55,4 +55,10 @@ void push_eval(eval_stack_t *stack, int operand);
 int pop_eval(eval_stack_t *stack);
 void free_eval_stack(eval_stack_t *stack);
 
+void dfs_traversal(mpc_ast_t *node, token_list_t *token_list);
+void print_tokens(token_list_t *token_list);
+token_list_t *infix_to_rpn(token_list_t *infix_tokens);
+int evaluate_postfix(token_list_t *postfix_tokens);
+
+
 #endif
