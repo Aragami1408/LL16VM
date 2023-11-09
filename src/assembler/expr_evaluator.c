@@ -277,3 +277,15 @@ int evaluate_postfix(token_list_t *postfix_tokens) {
 
 	return final_result;
 }
+
+int evaluate_expression(mpc_ast_t *ast) {
+	token_list_t *infix_tokens = create_token_list(INITIAL_CAPACITY);
+	dfs_traversal(ast, infix_tokens);
+	token_list_t *rpn_tokens = infix_to_rpn(infix_tokens);
+	int result = evaluate_postfix(rpn_tokens);
+	
+	free_token_list(rpn_tokens);
+	free_token_list(infix_tokens);
+
+	return result;
+}

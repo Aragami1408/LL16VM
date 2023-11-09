@@ -34,8 +34,8 @@ add : "add" <reg_reg>
     | "add" <lit_reg> ;
 
 sub : "sub" <reg_reg> 
-    | "sub" <lit_reg> 
-    | "sub" <reg_lit> ;
+    | "sub" <reg_lit> 
+    | "sub" <lit_reg> ;
 
 mul : "mul" <reg_reg> 
     | "mul" <lit_reg> ;
@@ -88,15 +88,13 @@ cal : "cal" <lit>
 ret : "ret" ;
 hlt : "hlt" ;
 
-
-
 lit : (<hex_literal> | <square_bracket_expr>) ;
 lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;
 reg_lit : <registers> ',' (<hex_literal> | <square_bracket_expr>) ;
 reg_reg : <registers> ',' <registers> ;
 reg_mem : <registers> ',' (<address> | ('&' <square_bracket_expr>)) ;
-mem_reg : (<address> | <square_bracket_expr>) ',' <registers> ;
-lit_mem : (<hex_literal> | <square_bracket_expr>) ',' (<address> | <square_bracket_expr>) ;
+mem_reg : (<address> | ('&' <square_bracket_expr>)) ',' <registers> ;
+lit_mem : (<hex_literal> | <square_bracket_expr>) ',' (<address> | ('&' <square_bracket_expr>)) ;
 reg_ptr_reg : '&' <registers> ',' <registers> ;
 lit_off_reg : (<hex_literal> | <square_bracket_expr>) ',' '&' <registers> ',' <registers> ;
 

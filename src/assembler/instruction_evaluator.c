@@ -141,6 +141,8 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 	if(mpc_parse(filename, input, parser, &r)) {
 		mpc_ast_t *ast = r.output;
 		printf("------------------------\n");
+		mpc_ast_print(r.output);
+		printf("------------------------\n");
 		if (strstr(input, "ret") || strstr(input, "hlt")) {
 			strcpy(inst->mnemonic, ast->tag);
 			inst->type = NO_ARGS;
@@ -176,8 +178,22 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 
 				inst->type_size = 3;
 				printf("Instruction Size: %d\n", inst->type_size);
-
+				
 				strcpy(inst->single_lit, lit->children[1]->contents);
+				printf("\t Literal: $%s\n", inst->single_lit);
+			}
+			else if (strstr(instruction_type->tag, "square_bracket_expr")) {
+				mpc_ast_t *lit = instruction_type;
+
+				// strcpy(inst->type, "single_lit|>");
+				inst->type = SINGLE_LIT;
+				printf("Instruction Type: single_lit\n");
+
+				inst->type_size = 3;
+				printf("Instruction Size: %d\n", inst->type_size);
+
+				int result = evaluate_expression(lit);	
+				sprintf(inst->single_lit, "%04x", result); 
 				printf("\t Literal: $%s\n", inst->single_lit);
 			}
 			else {
@@ -190,11 +206,16 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 
 					inst->type = LIT_REG;
 					inst->type_size = 4;
+					
+					if (strstr(lit->tag, "hex_literal")) {	
+						strcpy(inst->lit_reg.lit, lit->children[1]->contents);
+					}
+					else if (strstr(lit->tag, "square_bracket_expr")) {
+						int result = evaluate_expression(lit);
+						sprintf(inst->lit_reg.lit, "%04x", result);
+					}
 
-					strcpy(inst->lit_reg.lit, lit->children[1]->contents);
 					printf("\t Literal: $%s\n", inst->lit_reg.lit);
-
-
 					strcpy(inst->lit_reg.reg, reg->contents);
 					printf("\t Register: %s\n", inst->lit_reg.reg);
 				}
@@ -216,23 +237,30 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					mpc_ast_t *reg = instruction_type->children[0];	
 					mpc_ast_t *lit = instruction_type->children[2];
 					
-					if (strlen(lit->children[1]->contents) <= 2) {
+					if (strstr(inst->mnemonic, "lsf") || strstr(inst->mnemonic, "rsf")) {
 						inst->type = REG_LIT8;
 						inst->type_size = 3;
 					} else {
 						inst->type = REG_LIT;
 						inst->type_size = 4;
 					}
+
 					strcpy(inst->lit_reg.reg, reg->contents);
 					printf("\t Register: %s\n", inst->lit_reg.reg);
 
-					strcpy(inst->lit_reg.lit, lit->children[1]->contents);
+					if (strstr(lit->tag, "hex_literal")) {
+						strcpy(inst->lit_reg.lit, lit->children[1]->contents);
+					}
+					else if (strstr(lit->tag, "square_bracket_expr")) {
+						int result = evaluate_expression(lit);
+						sprintf(inst->lit_reg.lit, "%04x", result);
+					}
+
 					printf("\t Literal: $%s\n", inst->lit_reg.lit);
 
 				}
 				else if (strstr(instruction_type->tag, "reg_mem")) {
 					mpc_ast_t *reg = instruction_type->children[0];
-					mpc_ast_t *mem = instruction_type->children[2];
 
 					inst->type = REG_MEM;
 					inst->type_size = 4;
@@ -240,33 +268,67 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					strcpy(inst->reg_mem.reg, reg->contents);
 					printf("\t Register: %s\n", inst->reg_mem.reg);
 
-					strcpy(inst->reg_mem.mem, mem->children[1]->contents);
+					if (instruction_type->children_num < 4) {
+						mpc_ast_t *address = instruction_type->children[2];
+						strcpy(inst->reg_mem.mem, address->children[1]->contents);
+					}
+					else {
+						mpc_ast_t *expr = instruction_type->children[3];
+						int result = evaluate_expression(expr);
+						sprintf(inst->reg_mem.mem, "%04x", result);
+					}
+
 					printf("\t Memory address: &%s\n", inst->reg_mem.mem);
 				}
 				else if (strstr(instruction_type->tag, "mem_reg")) {
-					mpc_ast_t *mem = instruction_type->children[0];
-					mpc_ast_t *reg = instruction_type->children[2];
 
 					inst->type = MEM_REG;
 					inst->type_size = 4;
 
-					strcpy(inst->reg_mem.mem, mem->children[1]->contents);
-					printf("\t Memory address: &%s\n", inst->reg_mem.mem);
+					if (instruction_type->children_num < 4) {
+						mpc_ast_t *mem = instruction_type->children[0];
+						strcpy(inst->reg_mem.mem, mem->children[1]->contents);
+						printf("\t Memory address: &%s\n", inst->reg_mem.mem);
 
-					strcpy(inst->reg_mem.reg, reg->contents);
-					printf("\t Register: %s\n", inst->reg_mem.reg);
+						mpc_ast_t *reg = instruction_type->children[2];
+						strcpy(inst->reg_mem.reg, reg->contents);
+						printf("\t Register: %s\n", inst->reg_mem.reg);
+					}
+					else {
+						mpc_ast_t *expr = instruction_type->children[1];
+						int result = evaluate_expression(expr);
+						sprintf(inst->reg_mem.mem, "%04x", result);
+
+						mpc_ast_t *reg = instruction_type->children[3];
+						strcpy(inst->reg_mem.reg, reg->contents);
+						printf("\t Register: %s\n", inst->reg_mem.reg);
+					}
+
 				}
 				else if (strstr(instruction_type->tag, "lit_mem")) {
 					mpc_ast_t *lit = instruction_type->children[0];	
-					mpc_ast_t *mem = instruction_type->children[2];
 
 					inst->type = LIT_MEM;
 					inst->type_size = 5;
-
-					strcpy(inst->lit_mem.lit, lit->children[1]->contents);
+					
+					if (strstr(lit->tag, "hex_literal")) {	
+						strcpy(inst->lit_mem.lit, lit->children[1]->contents);
+					}
+					else if (strstr(lit->tag, "square_bracket_expr")) {
+						int result = evaluate_expression(lit);
+						sprintf(inst->lit_mem.lit, "%04x", result);
+					}
 					printf("\t Literal: $%s\n", inst->lit_mem.lit);
 
-					strcpy(inst->lit_mem.mem, mem->children[1]->contents);
+					if (instruction_type->children_num < 4) {
+						mpc_ast_t *mem = instruction_type->children[2];
+						strcpy(inst->lit_mem.mem, mem->children[1]->contents);
+					}
+					else {
+						mpc_ast_t *mem = instruction_type->children[3];
+						int result = evaluate_expression(mem);
+						sprintf(inst->lit_mem.mem, "%04x", result);
+					}
 					printf("\t Memory address: &%s\n", inst->lit_mem.mem);
 				}
 				else if (strstr(instruction_type->tag, "reg_ptr_reg")) {
@@ -290,7 +352,13 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					inst->type = LIT_OFF_REG;
 					inst->type_size = 5;
 
-					strcpy(inst->lit_off_reg.lit, lit->children[1]->contents);
+					if (strstr(lit->tag, "hex_literal")) {
+						strcpy(inst->lit_off_reg.lit, lit->children[1]->contents);
+					}
+					else if (strstr(lit->tag, "square_bracket_expr")) {
+						int result = evaluate_expression(lit);
+						sprintf(inst->lit_mem.lit, "%04x", result);
+					}
 					printf("\t Literal: $%s\n", inst->lit_off_reg.lit);
 
 					strcpy(inst->lit_off_reg.reg1, reg1->contents);

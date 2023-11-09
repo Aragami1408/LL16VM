@@ -8,6 +8,8 @@
 
 #include "mpc.h"
 
+#define INITIAL_CAPACITY 10
+
 typedef enum {
 	TOKEN_LITERAL,
 	TOKEN_OP,
@@ -59,6 +61,8 @@ void dfs_traversal(mpc_ast_t *node, token_list_t *token_list);
 void print_tokens(token_list_t *token_list);
 token_list_t *infix_to_rpn(token_list_t *infix_tokens);
 int evaluate_postfix(token_list_t *postfix_tokens);
+
+int evaluate_expression(mpc_ast_t *node);
 
 
 #endif

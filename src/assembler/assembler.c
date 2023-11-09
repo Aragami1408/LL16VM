@@ -4,6 +4,7 @@
 
 #include "mpc.h"
 #include "../base_helper.h"
+#include "../base_defines.h"
 
 #include "utils.h"
 
@@ -15,7 +16,7 @@
 
 #include "common_parser.h"
 
-#ifdef _WIN32
+#if OS_WINDOWS == 1
 
 static char buffer[2048];
 
@@ -33,6 +34,46 @@ void add_history(char* unused) {}
 #else
 #include <editline/readline.h>
 #endif
+
+// FOR DEBUGGING ONLY
+int run_repl_no_eval(mpc_parser_t *parser) {
+	while (1) {
+		char *input = readline("$ ");
+		add_history(input);
+
+		mpc_result_t r;
+		if (mpc_parse("<stdin", input, parser, &r)) {
+			mpc_ast_print(r.output);
+			mpc_ast_delete(r.output);
+		}
+		else {
+			mpc_err_print(r.error);
+			mpc_err_delete(r.error);
+		}
+	}
+	return 0;
+}
+
+// FOR DEBUGGING ONLY
+int run_repl_expr(mpc_parser_t *parser) {
+	while (1) {
+		char *input = readline("$ ");
+		add_history(input);
+
+		mpc_result_t r;
+		if (mpc_parse("<stdin>", input, parser, &r)) {
+			mpc_ast_t *ast = r.output;
+			int result = evaluate_expression(ast);
+			printf("The result of the expression is: $%04x\n", result);	
+			mpc_ast_delete(ast);
+		}
+		else {
+			mpc_err_print(r.error);
+			mpc_err_print(r.error);
+		}
+	}
+	return 0;
+}
 
 int run_repl(mpc_parser_t *parser) {
 	while (1) {
@@ -55,32 +96,6 @@ int run_repl(mpc_parser_t *parser) {
 		printf("\n\n");
 
 		free(inst);
-	}
-	return 0;
-}
-
-int run_repl_expr(mpc_parser_t *parser) {
-	while (1) {
-		char *input = readline("$ ");
-		add_history(input);
-
-		mpc_result_t r;
-		if (mpc_parse("<stdin>", input, parser, &r)) {
-			mpc_ast_t *ast = r.output;
-			token_list_t *token_list = create_token_list(10);
-			dfs_traversal(ast, token_list);
-			token_list_t *rpn_tokens = infix_to_rpn(token_list);
-			int result = evaluate_postfix(rpn_tokens);
-			printf("The result of the expression is: $%04x\n", result);
-			
-			free_token_list(rpn_tokens);
-			mpc_ast_delete(ast);
-			free_token_list(token_list);
-		}
-		else {
-			mpc_err_print(r.error);
-			mpc_err_print(r.error);
-		}
 	}
 	return 0;
 }
@@ -111,7 +126,7 @@ int run_file(mpc_parser_t *parser, const char *filename) {
 
 			printf("\n\n");
 
-			free(lines[i]); // Free the dynamically allocated memory for each line
+			free(lines[i]);
 			free(inst);
 		}
 
@@ -133,7 +148,6 @@ int main(int argc, char **argv) {
 
 	// Common parsers
 	common_parsers_t *common_parsers = common_parsers_init();
-
 
 	// Square bracket expression parsers
 	expr_parser_t *expr_parser = expr_parser_init();	
@@ -191,8 +205,9 @@ int main(int argc, char **argv) {
 
 	if (argc < 2) {
 		printf("Missing file. Going REPL mode\n");
-		// run_repl(assembler);
-		run_repl_expr(expr_parser->square_bracket_expr);
+		run_repl(assembler);
+		// run_repl_no_eval(assembler);
+		// run_repl_expr(expr_parser->square_bracket_expr);
 	}
 	else {
 		run_file(assembler, argv[1]);
@@ -201,11 +216,8 @@ int main(int argc, char **argv) {
 	mpc_delete(assembler);
 
 	opcode_parsers_free(opc_parsers);
-
 	inst_type_parsers_free(inst_type_parsers);
-
 	common_parsers_free(common_parsers);
-
 	expr_parser_free(expr_parser);
 
 

@@ -2,6 +2,9 @@
 #define INSTRUCTION_EVALUATOR_H
 
 #include "mpc.h"
+#include "expr_evaluator.h"
+#include "../base_types.h"
+
 
 #define MAX_LENGTH 100
 
