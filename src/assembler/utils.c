@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 char** read_file_to_lines(const char* filename, int* num_lines) {
     FILE* file = fopen(filename, "r");
@@ -58,4 +59,33 @@ char** read_file_to_lines(const char* filename, int* num_lines) {
 
     *num_lines = line_count;
     return lines;
+}
+
+void trim_whitespace(char* str) {
+    if (str == NULL) {
+        return; // Handle NULL strings if needed
+    }
+
+    int length = (int) strlen(str);
+
+    // Trim leading whitespace
+    int start = 0;
+    while (start < length && isspace((unsigned char)str[start])) {
+        start++;
+    }
+
+    // Trim trailing whitespace
+    int end = length - 1;
+    while (end > start && isspace((unsigned char)str[end])) {
+        end--;
+    }
+
+    // Shift the non-whitespace characters to the beginning of the string
+    int i, j;
+    for (i = start, j = 0; i <= end; i++, j++) {
+        str[j] = str[i];
+    }
+
+    // Null-terminate the trimmed string
+    str[j] = '\0';
 }

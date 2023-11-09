@@ -5,4 +5,6 @@
 
 char **read_file_to_lines(const char *filename, int* num_lines);
 
+void trim_whitespace(char *str);
+
 #endif

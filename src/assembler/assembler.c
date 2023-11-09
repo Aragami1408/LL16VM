@@ -76,9 +76,12 @@ int run_repl_expr(mpc_parser_t *parser) {
 }
 
 int run_repl(mpc_parser_t *parser) {
+	u16 current_address = 0x0000;
 	while (1) {
 		char *input = readline("$ ");
 		add_history(input);
+
+		
 		parser_instruction_t *inst = evaluate_instruction(parser, "<stdin>", input);
 
 		int machine_code[inst->type_size];	
@@ -87,11 +90,13 @@ int run_repl(mpc_parser_t *parser) {
 		}
 
 		generate_machine_code(inst, machine_code);
-		printf("Machine Code: ");
+		printf("Machine Code: %04x: ", current_address);
 		for (int i = 0; i < inst->type_size; i++) {
 			if (machine_code[i] == -1) printf("failed ");
 			else printf("$%02x ", machine_code[i]);
 		}
+
+		current_address += inst->type_size;
 
 		printf("\n\n");
 
@@ -106,10 +111,13 @@ int run_file(mpc_parser_t *parser, const char *filename) {
 	char **lines = read_file_to_lines(filename, &line_count);
 
 	if (lines != NULL) {
+		u16 current_address = 0x0000;
 		for (int i = 0; i < line_count; i++) {
-
+			
 			if (strcmp(lines[i], "") == 0) continue;
+			trim_whitespace(lines[i]);
 			printf("Line %d: %s\n", i + 1, lines[i]);
+
 			parser_instruction_t *inst = evaluate_instruction(parser, "input", lines[i]);
 
 			int machine_code[inst->type_size];	
@@ -118,11 +126,13 @@ int run_file(mpc_parser_t *parser, const char *filename) {
 			}
 
 			generate_machine_code(inst, machine_code);
-			printf("Machine Code: ");
+			printf("Machine Code: %04x: ", current_address);
 			for (int i = 0; i < inst->type_size; i++) {
 				if (machine_code[i] == -1) printf("failed ");
 				else printf("0x%02x ", machine_code[i]);
 			}
+
+			current_address += inst->type_size;
 
 			printf("\n\n");
 
