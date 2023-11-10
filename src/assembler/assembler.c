@@ -18,86 +18,6 @@
 
 #include "label_evaluator.h"
 
-#if OS_WINDOWS == 1
-
-static char buffer[2048];
-
-char* readline(char* prompt) {
-	fputs(prompt, stdout);
-	fgets(buffer, 2048, stdin);
-	char* cpy = malloc(strlen(buffer)+1);
-	strcpy(cpy, buffer);
-	cpy[strlen(cpy)-1] = '\0';
-	return cpy;
-}
-
-void add_history(char* unused) {}
-
-#else
-#include <editline/readline.h>
-#endif
-
-// FOR DEBUGGING ONLY
-int run_repl_no_eval(mpc_parser_t *parser) {
-	while (1) {
-		char *input = readline("$ ");
-		add_history(input);
-
-		mpc_result_t r;
-		if (mpc_parse("<stdin>", input, parser, &r)) {
-			mpc_ast_print(r.output);
-			mpc_ast_delete(r.output);
-		}
-		else {
-			mpc_err_print(r.error);
-			mpc_err_delete(r.error);
-		}
-	}
-	return 0;
-}
-
-// FOR DEBUGGING ONLY
-int run_repl_expr(mpc_parser_t *parser) {
-	while (1) {
-		char *input = readline("$ ");
-		add_history(input);
-
-		label_hashmap_t label_map;
-		init_label_hashmap(&label_map);
-		insert_label(&label_map, "start", 0x00);
-		insert_label(&label_map, "loop", 0x05);
-		insert_label(&label_map, "end", 0x1a);
-
-		mpc_result_t r;
-		if (mpc_parse("<stdin>", input, parser, &r)) {
-			mpc_ast_t *ast = r.output;
-			printf("---------------------\n");
-			mpc_ast_print(ast);
-			printf("---------------------\n");
-			token_list_t *infix_tokens = create_token_list(INITIAL_CAPACITY);
-			dfs_traversal(ast, infix_tokens, &label_map);
-			printf("---------------------\n");
-			print_tokens(infix_tokens);
-			printf("---------------------\n");
-			token_list_t *rpn_tokens = infix_to_rpn(infix_tokens);
-			print_tokens(rpn_tokens);
-			printf("---------------------\n");
-			int result = evaluate_postfix(rpn_tokens);
-			printf("Expr result is: $%04x\n", result);
-
-
-			free_token_list(rpn_tokens);
-			free_token_list(infix_tokens);
-			mpc_ast_delete(ast);
-		}
-		else {
-			mpc_err_print(r.error);
-			mpc_err_print(r.error);
-		}
-	}
-	return 0;
-}
-
 label_hashmap_t scan_labels(mpc_parser_t *parser, const char *filename) {
 	int line_count;
 	char **lines = read_file_to_lines(filename, &line_count);
@@ -266,10 +186,7 @@ int main(int argc, char **argv) {
 				);
 
 	if (argc < 2) {
-		printf("Missing file. Going REPL mode\n");
-		// run_repl(assembler);
-		// run_repl_no_eval(assembler);
-		run_repl_expr(expr_parser->square_bracket_expr);
+		printf("Missing file. Format: %s <asm_file> \n", argv[0]);
 	}
 	else {
 		label_hashmap_t label_map = scan_labels(assembler, argv[1]);
@@ -282,6 +199,4 @@ int main(int argc, char **argv) {
 	inst_type_parsers_free(inst_type_parsers);
 	common_parsers_free(common_parsers);
 	expr_parser_free(expr_parser);
-
-
 }

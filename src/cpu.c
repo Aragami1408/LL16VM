@@ -14,14 +14,8 @@ cpu_t *cpu_init(memmapper_t *memory) {
 		cpu->registers[i] = 0;
 	}
 	
-	// Loading instructions into the memory
-	// for(int i = 0; i < nbytes; i++) {
-	// 	cpu->memory[i] = writable_bytes[i];
-	// }
 	cpu->memory = memory;
 	
-	// cpu->registers[CPU_REG_SP] = ArrayCount(cpu->memory) - 1 - 1;
-	// cpu->registers[CPU_REG_FP] = ArrayCount(cpu->memory) - 1 - 1;
 	cpu->registers[CPU_REG_SP] = 0xffff - 1;
 	cpu->registers[CPU_REG_FP] = 0xffff - 1;
 	
@@ -32,14 +26,11 @@ cpu_t *cpu_init(memmapper_t *memory) {
 }
 
 void cpu_free(cpu_t *cpu) {
-	// free(cpu->memory);
-	// free(cpu->registers);
 	free(cpu);
 }
 
 u8 cpu_fetch(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
-	// const u8 instruction = cpu->memory[next_instruction_address];
 	const u8 instruction = memmapper_readU8(cpu->memory, next_instruction_address);
 	cpu->registers[CPU_REG_IP] = next_instruction_address + 1;
 	return instruction;
@@ -47,8 +38,6 @@ u8 cpu_fetch(cpu_t *cpu) {
 
 u16 cpu_fetch16(cpu_t *cpu) {
 	const u16 next_instruction_address = cpu->registers[CPU_REG_IP];
-	// const u16 ins_hi = cpu->memory[next_instruction_address];
-	// const u16 ins_lo = cpu->memory[next_instruction_address + 1];
 	const u8 ins_hi = memmapper_readU8(cpu->memory, next_instruction_address);
 	const u8 ins_lo = memmapper_readU8(cpu->memory, next_instruction_address + 1);
 	
@@ -58,7 +47,6 @@ u16 cpu_fetch16(cpu_t *cpu) {
 
 void cpu_stackPush(cpu_t *cpu, u16 value) {
 	const u16 sp_address = cpu->registers[CPU_REG_SP];
-	// cpu_memWrite16(cpu, sp_address, value);
 	memmapper_writeU16(cpu->memory, sp_address, value);
 	cpu->registers[CPU_REG_SP] = sp_address - 2;
 	cpu->stackframe_size += 2;
