@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 				);
 
 	if (argc < 2) {
-		printf("Missile file. Format: %s <asm_file> \n", argv[0]);
+		printf("Missing file. Format: %s <asm_file> \n", argv[0]);
 	}
 	else {
 		label_hashmap_t label_map = scan_labels(assembler, argv[1]);
