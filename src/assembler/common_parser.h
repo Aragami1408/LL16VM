@@ -4,7 +4,7 @@
 #include "mpc.h"
 
 typedef struct common_parsers {
-	// Identifier parsers
+	// Literal parsers
 	mpc_parser_t *hex_literal;
 	mpc_parser_t *address;
 
@@ -12,7 +12,9 @@ typedef struct common_parsers {
 	mpc_parser_t *registers;
 	mpc_parser_t *gp_registers;
 
+	// Identifier parsers
 	mpc_parser_t *variable;
+	mpc_parser_t *label;
 } common_parsers_t;
 
 common_parsers_t *common_parsers_init(void);

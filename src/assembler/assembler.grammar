@@ -20,7 +20,10 @@ assembler : <mov>
     | <pop> 
     | <cal>
     | <ret>
-    | <hlt> ;
+    | <hlt> 
+    | <label> ;
+
+label: /[a-zA-Z_][a-zA-Z1-9_]+/ ':' ;
 
 mov : "mov" <lit_reg> 
     | "mov" <reg_reg>

@@ -1,4 +1,5 @@
 #include "expr_evaluator.h"
+#include "label_evaluator.h"
 
 token_list_t* create_token_list(size_t initial_capacity) {
     token_list_t* token_list = (token_list_t*)malloc(sizeof(token_list_t));
@@ -124,42 +125,67 @@ int __operator_precedence(token_t operator) {
 	}
 }
 
-void dfs_traversal(mpc_ast_t *node, token_list_t *token_list) {
+bool __is_hex(const char *str) {
+	if (str == NULL || str[0] == '\0') return false;
+
+	for (int i = 0; str[i] != '\0'; i++) {
+		if (!isxdigit((unsigned char)str[i])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void dfs_traversal(mpc_ast_t *node, token_list_t *token_list, const label_hashmap_t *label_map) {
     if (node == NULL) return; // TODO: Error Handling
 			      
     if (node->tag) {
-	token_t token = {0};
+		token_t token = {0};
 
-#define MATCH_CONTENT(str) strstr(node->contents, str)
+		#define MATCH_CONTENT(str) strstr(node->contents, str)
 
+		if (MATCH_CONTENT("+") 
+				|| MATCH_CONTENT("-") 
+				|| MATCH_CONTENT("*")) {
+			token.type = TOKEN_OP;
+			token.op = node->contents[0];
+			append_token(token_list, token);
+		}
+		else if (MATCH_CONTENT("(")) {
+			token.type = TOKEN_LPAREN;
+			append_token(token_list, token);
+		}
+		else if (MATCH_CONTENT(")")) {
+			token.type = TOKEN_RPAREN;
+			append_token(token_list, token);
+		}
+		else if (__is_hex(node->contents)) {
+			token.type = TOKEN_LITERAL;
+			token.val = (int)strtol(node->contents, NULL, 16);
+			append_token(token_list, token);
+		}
+		else if (strcmp(node->contents, "") == 0 || MATCH_CONTENT("[") || MATCH_CONTENT("]") || MATCH_CONTENT("$") || MATCH_CONTENT("!")) {
+			// Skip
+		}
 
-	if (MATCH_CONTENT("+") 
-	|| MATCH_CONTENT("-") 
-	|| MATCH_CONTENT("*")) {
-
-	    token.type = TOKEN_OP;
-	    token.op = node->contents[0];
-	    append_token(token_list, token);
-	}
-	else if (MATCH_CONTENT("(")) {
-	    token.type = TOKEN_LPAREN;
-	    append_token(token_list, token);
-	}
-	else if (MATCH_CONTENT(")")) {
-	    token.type = TOKEN_RPAREN;
-	    append_token(token_list, token);
-	}
-	else if (strcmp(node->contents, "") == 0 || MATCH_CONTENT("[") || MATCH_CONTENT("]") || MATCH_CONTENT("$")) {
-	}
-	else {
-	    token.type = TOKEN_LITERAL;
-	    token.val = (int)strtol(node->contents, NULL, 16);
-	    append_token(token_list, token);
-	}
+		else {
+			// Find label and replace to literal if found
+			int literal;
+			if (find_label(label_map, node->contents, &literal)) {
+				token.type = TOKEN_LITERAL;
+				token.val = literal;
+				append_token(token_list, token);
+			}
+			else {
+				printf("%s label not resolved. Exit the program\n", node->contents);
+				exit(EXIT_FAILURE);
+			}
+		}
     }
 
     for (int i = 0; i < node->children_num; i++) {
-		dfs_traversal(node->children[i], token_list);
+		dfs_traversal(node->children[i], token_list, label_map);
     }
 
 }
@@ -173,14 +199,18 @@ void print_tokens(token_list_t *token_list) {
 		token_t token = token_list->tokens[i];
 		switch (token.type) {
 			case TOKEN_LITERAL:
+				printf("Literal Token: %d\n", token.val);
 				break;
 			case TOKEN_OP:
+				printf("Operator Token: %c\n", token.op);
 				break;
 			case TOKEN_LPAREN:
+				printf("Left Parenthesis Token\n");
 				break;
 			case TOKEN_RPAREN:
+				printf("Right Parenthesis Token\n");
 				break;
-		}
+        }
 	}
 }
 
@@ -193,7 +223,6 @@ token_list_t *infix_to_rpn(token_list_t *infix_tokens) {
 		token_t token = infix_tokens->tokens[i];
 
 		switch (token.type) {
-
 			case TOKEN_LITERAL:
 				append_token(rpn_tokens, token);
 				break;
@@ -278,9 +307,9 @@ int evaluate_postfix(token_list_t *postfix_tokens) {
 	return final_result;
 }
 
-int evaluate_expression(mpc_ast_t *ast) {
+int evaluate_expression(mpc_ast_t *ast, const label_hashmap_t *label_map) {
 	token_list_t *infix_tokens = create_token_list(INITIAL_CAPACITY);
-	dfs_traversal(ast, infix_tokens);
+	dfs_traversal(ast, infix_tokens, label_map);
 	token_list_t *rpn_tokens = infix_to_rpn(infix_tokens);
 	int result = evaluate_postfix(rpn_tokens);
 	

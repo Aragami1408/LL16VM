@@ -8,7 +8,10 @@
 
 #include "mpc.h"
 
+#include "label_evaluator.h"
+
 #define INITIAL_CAPACITY 10
+#define MAX_EXPR_LENGTH 50
 
 typedef enum {
 	TOKEN_LITERAL,
@@ -21,6 +24,7 @@ typedef struct {
 	token_type_t type;
 	int val;
 	char op;
+	char id_name[MAX_EXPR_LENGTH];
 } token_t;
 
 typedef struct token_list {
@@ -57,12 +61,11 @@ void push_eval(eval_stack_t *stack, int operand);
 int pop_eval(eval_stack_t *stack);
 void free_eval_stack(eval_stack_t *stack);
 
-void dfs_traversal(mpc_ast_t *node, token_list_t *token_list);
+void dfs_traversal(mpc_ast_t *node, token_list_t *token_list, const label_hashmap_t *label_map);
 void print_tokens(token_list_t *token_list);
 token_list_t *infix_to_rpn(token_list_t *infix_tokens);
 int evaluate_postfix(token_list_t *postfix_tokens);
 
-int evaluate_expression(mpc_ast_t *node);
-
+int evaluate_expression(mpc_ast_t *node, const label_hashmap_t *label_map);
 
 #endif

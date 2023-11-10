@@ -89,3 +89,22 @@ void trim_whitespace(char* str) {
     // Null-terminate the trimmed string
     str[j] = '\0';
 }
+
+void append_bytes_to_file(const char *filename, const void *data, size_t size) {
+    FILE *file = fopen(filename, "ab"); // "ab" mode for binary append
+
+    if (file == NULL) {
+        perror("Error opening file for append");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t elements_written = fwrite(data, 1, size, file);
+
+    if (elements_written != size) {
+        perror("Error writing to file");
+        fclose(file);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(file);
+}

@@ -16,6 +16,8 @@
 
 #include "common_parser.h"
 
+#include "label_evaluator.h"
+
 #if OS_WINDOWS == 1
 
 static char buffer[2048];
@@ -42,7 +44,7 @@ int run_repl_no_eval(mpc_parser_t *parser) {
 		add_history(input);
 
 		mpc_result_t r;
-		if (mpc_parse("<stdin", input, parser, &r)) {
+		if (mpc_parse("<stdin>", input, parser, &r)) {
 			mpc_ast_print(r.output);
 			mpc_ast_delete(r.output);
 		}
@@ -60,11 +62,32 @@ int run_repl_expr(mpc_parser_t *parser) {
 		char *input = readline("$ ");
 		add_history(input);
 
+		label_hashmap_t label_map;
+		init_label_hashmap(&label_map);
+		insert_label(&label_map, "start", 0x00);
+		insert_label(&label_map, "loop", 0x05);
+		insert_label(&label_map, "end", 0x1a);
+
 		mpc_result_t r;
 		if (mpc_parse("<stdin>", input, parser, &r)) {
 			mpc_ast_t *ast = r.output;
-			int result = evaluate_expression(ast);
-			printf("The result of the expression is: $%04x\n", result);	
+			printf("---------------------\n");
+			mpc_ast_print(ast);
+			printf("---------------------\n");
+			token_list_t *infix_tokens = create_token_list(INITIAL_CAPACITY);
+			dfs_traversal(ast, infix_tokens, &label_map);
+			printf("---------------------\n");
+			print_tokens(infix_tokens);
+			printf("---------------------\n");
+			token_list_t *rpn_tokens = infix_to_rpn(infix_tokens);
+			print_tokens(rpn_tokens);
+			printf("---------------------\n");
+			int result = evaluate_postfix(rpn_tokens);
+			printf("Expr result is: $%04x\n", result);
+
+
+			free_token_list(rpn_tokens);
+			free_token_list(infix_tokens);
 			mpc_ast_delete(ast);
 		}
 		else {
@@ -75,66 +98,94 @@ int run_repl_expr(mpc_parser_t *parser) {
 	return 0;
 }
 
-int run_repl(mpc_parser_t *parser) {
-	u16 current_address = 0x0000;
-	while (1) {
-		char *input = readline("$ ");
-		add_history(input);
+label_hashmap_t scan_labels(mpc_parser_t *parser, const char *filename) {
+	int line_count;
+	char **lines = read_file_to_lines(filename, &line_count);
 
-		
-		parser_instruction_t *inst = evaluate_instruction(parser, "<stdin>", input);
+	label_hashmap_t label_map;
+	init_label_hashmap(&label_map);
 
-		int machine_code[inst->type_size];	
-		for (int i = 0; i < inst->type_size; i++) {
-			machine_code[i] = 0x00;
+	if (lines != NULL) {
+		u16 current_address = 0x0000;
+		for (int i = 0; i < line_count; i++) {
+			trim_whitespace(lines[i]);
+			if (strcmp(lines[i], "") == 0) continue;
+			
+			mpc_result_t r;
+			if (mpc_parse("input", lines[i], parser, &r)) {
+				mpc_ast_t *ast = r.output;
+				if (strstr(lines[i], "ret") || strstr(lines[i], "hlt")) {
+				}
+				else {
+					mpc_ast_t *label_or_inst = ast->children[0];
+
+					if (strstr(label_or_inst->tag, "label")) {
+						insert_label(&label_map, label_or_inst->children[0]->contents, current_address);
+					}
+					else {
+						mpc_ast_t *instruction_type = label_or_inst->children[1];
+
+#define MATCH_TAG_AND_INCREASE(str, offset) if (strstr(instruction_type->tag, (str))) current_address += (offset);
+
+						MATCH_TAG_AND_INCREASE("registers", 2)
+						else MATCH_TAG_AND_INCREASE("lit|hex_literal", 3)
+						else MATCH_TAG_AND_INCREASE("square_bracket_expr", 3)
+						else {
+							MATCH_TAG_AND_INCREASE("lit_reg", 4)
+							else MATCH_TAG_AND_INCREASE("reg_reg", 3)
+							else MATCH_TAG_AND_INCREASE("reg_reg", 3)
+							else if (strstr(instruction_type->tag, "reg_lit")) {	
+								if (strstr(label_or_inst->tag, "lsf") || strstr(label_or_inst->tag, "rsf")) {
+									current_address += 3;
+								} else {
+									current_address += 4;
+								}
+							}
+							else MATCH_TAG_AND_INCREASE("reg_mem", 4)
+							else MATCH_TAG_AND_INCREASE("mem_reg", 4)
+							else MATCH_TAG_AND_INCREASE("lit_mem", 5)
+							else MATCH_TAG_AND_INCREASE("reg_ptr_reg", 3)
+							else MATCH_TAG_AND_INCREASE("lit_off_reg", 5)
+						}
+					}
+					
+				}
+				mpc_ast_delete(ast);
+			}
+			else {
+				mpc_err_print(r.error);
+				mpc_err_delete(r.error);
+			}
 		}
-
-		generate_machine_code(inst, machine_code);
-		printf("Machine Code: %04x: ", current_address);
-		for (int i = 0; i < inst->type_size; i++) {
-			if (machine_code[i] == -1) printf("failed ");
-			else printf("$%02x ", machine_code[i]);
-		}
-
-		current_address += inst->type_size;
-
-		printf("\n\n");
-
-		free(inst);
 	}
-	return 0;
+
+	return label_map;
 }
 
-int run_file(mpc_parser_t *parser, const char *filename) {
+int run_file(mpc_parser_t *parser, const char *filename, label_hashmap_t *label_map) {
 
 	int line_count;
 	char **lines = read_file_to_lines(filename, &line_count);
 
 	if (lines != NULL) {
-		u16 current_address = 0x0000;
 		for (int i = 0; i < line_count; i++) {
 			
-			if (strcmp(lines[i], "") == 0) continue;
 			trim_whitespace(lines[i]);
-			printf("Line %d: %s\n", i + 1, lines[i]);
+			if (strcmp(lines[i], "") == 0) continue;
 
-			parser_instruction_t *inst = evaluate_instruction(parser, "input", lines[i]);
+			parser_instruction_t *inst = evaluate_instruction(parser, "input", lines[i], label_map);
 
-			int machine_code[inst->type_size];	
-			for (int i = 0; i < inst->type_size; i++) {
-				machine_code[i] = 0x00;
+			if (inst != NULL) {
+				int machine_code[inst->type_size];	
+				for (int i = 0; i < inst->type_size; i++) {
+					machine_code[i] = 0x00;
+				}
+				generate_machine_code(inst, machine_code);
+				for (int i = 0; i < inst->type_size; i++) {
+					if (machine_code[i] == -1) printf("failed ");
+					else printf("%02x ", machine_code[i]);
+				}
 			}
-
-			generate_machine_code(inst, machine_code);
-			printf("Machine Code: %04x: ", current_address);
-			for (int i = 0; i < inst->type_size; i++) {
-				if (machine_code[i] == -1) printf("failed ");
-				else printf("0x%02x ", machine_code[i]);
-			}
-
-			current_address += inst->type_size;
-
-			printf("\n\n");
 
 			free(lines[i]);
 			free(inst);
@@ -208,6 +259,7 @@ int main(int argc, char **argv) {
 			expr_parser->factor,
 
 			common_parsers->variable,
+			common_parsers->label,
 
 			common_parsers->registers,
 			common_parsers->gp_registers
@@ -215,12 +267,13 @@ int main(int argc, char **argv) {
 
 	if (argc < 2) {
 		printf("Missing file. Going REPL mode\n");
-		run_repl(assembler);
+		// run_repl(assembler);
 		// run_repl_no_eval(assembler);
-		// run_repl_expr(expr_parser->square_bracket_expr);
+		run_repl_expr(expr_parser->square_bracket_expr);
 	}
 	else {
-		run_file(assembler, argv[1]);
+		label_hashmap_t label_map = scan_labels(assembler, argv[1]);
+		run_file(assembler, argv[1], &label_map);
 	}
 
 	mpc_delete(assembler);
