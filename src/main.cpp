@@ -39,8 +39,6 @@ int main(int argc, char **argv) {
 
 	cpu_t *cpu = cpu_init(mm);
 
-	const char *str = "hello world!";
-
 	for(int index = 0; index <= 0xff; index++) {
 		write_char_to_screen(writable_bytes, '*', index);
 	}
