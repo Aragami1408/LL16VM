@@ -5,3 +5,4 @@ LL16VM64.exe
 .vscode/
 .codechecker/
 src/.DS_Store
+src/assembler/parser.dSYM/Contents/Resources/DWARF/parser
