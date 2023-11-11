@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 typedef struct {
-    u8 memory[256*256];
+    u8 memory[(256*256) + 1];
 } ram_device_t;
 
 ram_device_t ram_device_init();

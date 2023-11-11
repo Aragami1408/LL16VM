@@ -4,7 +4,7 @@
 #include "base_types.h"
 
 typedef struct {
-    // it's empty for now
+	u8 memory[0xff + 1];
 } screen_device_t;
 
 screen_device_t screen_device_init();
