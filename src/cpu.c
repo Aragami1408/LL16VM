@@ -420,8 +420,10 @@ void cpu_execute(cpu_t *cpu, u8 instruction) {
 }
 
 void cpu_step(cpu_t *cpu) {
-	u8 instruction = cpu_fetch(cpu);
-	return cpu_execute(cpu, instruction);
+	if (!cpu->is_halt) {
+		u8 instruction = cpu_fetch(cpu);
+		cpu_execute(cpu, instruction);
+	}
 }
 
 void cpu_run(cpu_t *cpu) {

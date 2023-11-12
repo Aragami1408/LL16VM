@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "SDL_messagebox.h"
+#include "SDL_render.h"
 #include "cpu.h"
 #include "instructions.h"
 #include "memory_mapper.h"
@@ -20,20 +22,6 @@
 
 constexpr int SCREEN_WIDTH = 1280;
 constexpr int SCREEN_HEIGHT = 720;
-constexpr int SCREEN_DISPLAY_SIZE = 50;
-const int PIXEL_SIZE = SCREEN_WIDTH / SCREEN_DISPLAY_SIZE;
-
-const Uint32 colors[] = {
-	0x000000,
-	0xFFFFFF,
-	0xFF0000,
-	0x00FF00,
-	0x0000FF
-};
-
-const u8 screen_display_buffer[] = {
-	0x00, 0x01, 0x02, 0x03, 0x04
-};
 
 bool parse_hex_array(char *input, u8 *output) {
 	int index = 0;
@@ -54,24 +42,68 @@ bool parse_hex_array(char *input, u8 *output) {
 	return true;
 }
 
-int main(int argc, char **argv) {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
-        printf("Error: %s\n", SDL_GetError());
-        return -1;
-    }
+static void panic_and_abort(const char *title, const char *text) {
+	fprintf(stderr, "PANIC: %s ... %s\n", title, text);
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, text, NULL);
+	SDL_Quit();
+	exit(1);
+}
+
+typedef struct {
+	SDL_Window *window;
+	SDL_Renderer *renderer;
+	SDL_Texture *texture;
+} render_state_t;
+
+int init_sdl(render_state_t *rs) {
 
 #ifdef SDL_HINT_IME_SHOW_UI
     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif
 
-	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    SDL_Window* window = SDL_CreateWindow("Low-level 16bit Virtual Machine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, window_flags);
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-    if (renderer == nullptr)
-    {
-        SDL_Log("Error creating SDL_Renderer!");
-        return 0;
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
+        panic_and_abort("SDL_Init failed", SDL_GetError());
+        return -1;
     }
+
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
+	rs->window = SDL_CreateWindow(
+			"Low-level 16bit Virtual Machine", 
+			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+			SCREEN_WIDTH, SCREEN_HEIGHT, 
+			window_flags);
+	if (rs->window == nullptr) {
+		panic_and_abort("SDL_CreateWindow failed", SDL_GetError());
+		return -1;
+	}
+
+	SDL_RendererFlags render_flags = (SDL_RendererFlags)(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+	rs->renderer = SDL_CreateRenderer(rs->window, -1, render_flags);
+	if (rs->renderer == nullptr) {
+		panic_and_abort("SDL_CreateRenderer failed", SDL_GetError());
+		return -1;	
+	}
+
+	rs->texture = SDL_CreateTexture(rs->renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, 32, 32);
+	if (rs->texture == nullptr) {
+		panic_and_abort("SDL_CreateTexture failed", SDL_GetError());
+	}
+
+	return 0;
+}
+
+void free_sdl(render_state_t *rs) {
+	SDL_DestroyTexture(rs->texture);
+	SDL_DestroyRenderer(rs->renderer);
+	SDL_DestroyWindow(rs->window);
+	SDL_Quit();
+}
+
+int main(int argc, char **argv) {
+
+	render_state_t rs;
+
+	init_sdl(&rs);
 
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -82,8 +114,8 @@ int main(int argc, char **argv) {
 
 	ImGui::StyleColorsDark();
 
-	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer2_Init(renderer);
+	ImGui_ImplSDL2_InitForSDLRenderer(rs.window, rs.renderer);
+    ImGui_ImplSDLRenderer2_Init(rs.renderer);
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -104,7 +136,7 @@ int main(int argc, char **argv) {
 			ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT)
                 done = true;
-            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(rs.window))
                 done = true;
 		}
 
@@ -136,13 +168,18 @@ int main(int argc, char **argv) {
 				ImGui::Text("0x%04X: ", address);
 				ImGui::SameLine();
 				for (int j = 0; j < 8; j++) {
+					u8 current_value = memmapper_readU8(mm, address);
 					if (address == cpu->registers[CPU_REG_IP]) {
-						ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "0x%02X", memmapper_readU8(mm, address++));
+						ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "0x%02X", current_value);
+					}
+					else if (current_value != 0x00) {
+						ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "0x%02X", current_value);
 					}
 					else {
-						ImGui::Text("0x%02X", memmapper_readU8(mm, address++));
+						ImGui::Text("0x%02X", current_value);
 					}
 					ImGui::SameLine();
+					address++;
 				}
 				ImGui::Text("\n");
 			}
@@ -156,13 +193,18 @@ int main(int argc, char **argv) {
 				ImGui::Text("0x%04X: ", address);
 				ImGui::SameLine();
 				for (int j = 0; j < 8; j++) {
-					if (address == cpu->registers[CPU_REG_SP]) {
-						ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "0x%02X", memmapper_readU8(mm, address--));
+					u8 current_value = memmapper_readU8(mm, address);
+					if (current_value != 0x00) {
+						ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "0x%02X", current_value);
+					}
+					else if (address == cpu->registers[CPU_REG_SP]) {
+						ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "0x%02X", current_value);
 					}
 					else {
-						ImGui::Text("0x%02X", memmapper_readU8(mm, address--));
+						ImGui::Text("0x%02X", current_value);
 					}
 					ImGui::SameLine();
+					address--;
 				}
 				ImGui::Text("\n");	
 			}
@@ -170,22 +212,56 @@ int main(int argc, char **argv) {
 		}
 
 		{
-			ImGui::Begin("PASTE THE PROGRAM HERE");
-			static char text[1024] = "";
-			static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput | ImGuiInputTextFlags_CtrlEnterForNewLine;
+			ImGui::Begin("Execution");
+			static char program_filename[32] = ""; ImGui::InputText("Program Filename", program_filename, 32);	
+			static char program_buffer[1024] = "Program Source Code will show here";
+			
 			static bool is_loaded = false;
-			ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+			static bool run_successfully = false;
 			if (ImGui::Button("Load Program")) {
-				if (parse_hex_array(text, writable_bytes)) {
-					is_loaded = true;
+				FILE *program_file = fopen(program_filename, "r");
+				if (program_file == NULL) {
+					is_loaded = false;	
 				}
 				else {
-					is_loaded = false;
+					// Read program file to program buffer
+					fseek(program_file, 0, SEEK_END);
+					long length = ftell(program_file);
+					fseek(program_file, 0, SEEK_SET);
+					fread(program_buffer, 1, (size_t) length, program_file);
+					fclose(program_file);
+
+					// Read process output to hex output buffer
+					FILE *command_process;
+					char command[50];
+					char str_output[1024];
+					snprintf(command, 50, "./assembler %s", program_filename);
+					command_process = popen(command, "r");
+					if (!command_process) {
+						run_successfully = false;
+					}
+					else {
+						while(fgets(str_output, 1024, command_process) != NULL) {}
+						if (parse_hex_array(str_output, ram.memory)) {
+							run_successfully = true;
+						}
+						else {
+							run_successfully = false;
+						}
+					}
+					pclose(command_process);
+
+					is_loaded = true;
 				}
 			}
 
+			ImGui::InputTextMultiline("##source", program_buffer, IM_ARRAYSIZE(program_buffer), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_ReadOnly);
+
 			if (is_loaded) ImGui::Text("Program loaded successfully");
 			else ImGui::Text("Program failed to load");
+
+			if (run_successfully) ImGui::Text("Program executed successfully");
+			else ImGui::Text("Program failed to execute");
 
 			if (ImGui::Button("Step")) {
 				cpu_step(cpu);
@@ -204,12 +280,12 @@ int main(int argc, char **argv) {
 
 		// Rendering
 		ImGui::Render();
-		SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-		SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
-		SDL_RenderClear(renderer);
+		SDL_RenderSetScale(rs.renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+		SDL_SetRenderDrawColor(rs.renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
+		SDL_RenderClear(rs.renderer);
 
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(rs.renderer);
 	}
 
 	memmapper_free(mm);
@@ -219,9 +295,7 @@ int main(int argc, char **argv) {
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+	free_sdl(&rs);
 
 	return 0;
 }

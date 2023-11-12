@@ -1,0 +1,115 @@
+assembler : <mov> 
+    | <add> 
+    | <sub> 
+    | <mul> 
+    | <lsf>
+    | <rsf> 
+    | <and> 
+    | <or> 
+    | <xor> 
+    | <inc>
+    | <dec> 
+    | <not> 
+    | <jeq>
+    | <jne>
+    | <jlt>
+    | <jgt>
+    | <jle>
+    | <jge> 
+    | <psh>
+    | <pop> 
+    | <cal>
+    | <ret>
+    | <hlt> 
+    | <label> ;
+
+label: /[a-zA-Z_][a-zA-Z1-9_]+/ ':' ;
+
+mov : "mov" <lit_reg> 
+    | "mov" <reg_reg>
+    | "mov" <reg_mem>
+    | "mov" <mem_reg>
+    | "mov" <lit_mem>
+    | "mov" <reg_ptr_reg>
+    | "mov" <lit_off_reg> ;
+
+add : "add" <reg_reg> 
+    | "add" <lit_reg> ;
+
+sub : "sub" <reg_reg> 
+    | "sub" <reg_lit> 
+    | "sub" <lit_reg> ;
+
+mul : "mul" <reg_reg> 
+    | "mul" <lit_reg> ;
+
+lsf : "lsf" <reg_reg> 
+    | "lsf" <reg_lit> ;
+
+rsf : "rsf" <reg_reg> 
+    | "rsf" <reg_lit> ;
+
+and : "and" <reg_reg> 
+    | "and" <reg_lit> ;
+
+or : "or" <reg_reg> 
+    | "or" <reg_lit> ;
+
+xor : "xor" <reg_reg> 
+    | "xor" <lit_reg> ;
+
+inc : "inc" <registers> ;
+dec : "dec" <registers> ;
+not : "not" <registers> ;
+
+jeq : "jeq" <reg_mem> 
+    | "jeq" <lit_mem> ;
+
+jne : "jne" <reg_mem> 
+    | "jne" <lit_mem> ;
+
+jlt : "jlt" <reg_mem> 
+    | "jlt" <lit_mem> ;
+
+jgt : "jgt" <reg_mem> 
+    | "jgt" <lit_mem> ;
+    
+jle : "jle" <reg_mem> 
+    | "jle" <lit_mem> ;
+
+jge : "jge" <reg_mem> 
+    | "jge" <lit_mem> ;
+
+psh : "psh" <lit> 
+    | "psh" <registers> ;
+
+pop : "pop" <registers> ;
+
+cal : "cal" <lit> 
+    | "cal" <registers> ;
+
+ret : "ret" ;
+hlt : "hlt" ;
+
+lit : (<hex_literal> | <square_bracket_expr>) ;
+lit_reg : (<hex_literal> | <square_bracket_expr>) ',' <registers> ;
+reg_lit : <registers> ',' (<hex_literal> | <square_bracket_expr>) ;
+reg_reg : <registers> ',' <registers> ;
+reg_mem : <registers> ',' (<address> | ('&' <square_bracket_expr>)) ;
+mem_reg : (<address> | ('&' <square_bracket_expr>)) ',' <registers> ;
+lit_mem : (<hex_literal> | <square_bracket_expr>) ',' (<address> | ('&' <square_bracket_expr>)) ;
+reg_ptr_reg : '&' <registers> ',' <registers> ;
+lit_off_reg : (<hex_literal> | <square_bracket_expr>) ',' '&' <registers> ',' <registers> ;
+
+hex_literal : '$' /[0-9A-Fa-f]+/ ;
+address : '&' /[0-9A-Fa-f]+/ ;
+
+square_bracket_expr : '[' <expr> ']' ;
+expr : <term> (('+' | '-') <term>)* ;
+term : <factor> ('*' <factor>)* ;
+factor : <hex_literal> | <variable> | '(' <expr> ')' ;
+
+variable : '!' /[a-zA-Z_][a-zA-Z1-9_]+/ ;
+
+registers : <gp_registers> | "ip" | "acc" | "sp" | "fp" ;
+gp_registers : /r[1-8]/ ;
