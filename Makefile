@@ -108,4 +108,4 @@ $(ASSEMBLER): $(ASM_OBJS)
 	
 
 clean:
-	rm -f $(EMULATOR) $(ASSEMBLER) $(OBJS)
+	rm -f $(EMULATOR) $(ASSEMBLER) $(OBJS) $(ASM_OBJS)

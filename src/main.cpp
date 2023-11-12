@@ -228,6 +228,7 @@ int main(int argc, char **argv) {
 					fseek(program_file, 0, SEEK_END);
 					long length = ftell(program_file);
 					fseek(program_file, 0, SEEK_SET);
+					strncpy(program_buffer, "", 1024);
 					fread(program_buffer, 1, (size_t) length, program_file);
 					fclose(program_file);
 
@@ -235,7 +236,7 @@ int main(int argc, char **argv) {
 					FILE *command_process;
 					char command[50];
 					char str_output[1024];
-					snprintf(command, 50, "./assembler %s", program_filename);
+					snprintf(command, 50, "./ll16vm_assembler %s", program_filename);
 					command_process = popen(command, "r");
 					if (!command_process) {
 						run_successfully = false;
