@@ -33,7 +33,7 @@ label_hashmap_t scan_labels(mpc_parser_t *parser, const char *filename) {
 			
 			mpc_result_t r;
 			if (mpc_parse("input", lines[i], parser, &r)) {
-				mpc_ast_t *ast = r.output;
+				mpc_ast_t *ast = (mpc_ast_t *) r.output;
 				if (strstr(lines[i], "ret") || strstr(lines[i], "hlt")) {
 				}
 				else {
