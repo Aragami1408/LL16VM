@@ -8,6 +8,7 @@ mov $5678, r4
 psh $0000
 cal [!my_subroutine]
 psh $4444
+hlt
 
 my_subroutine:
   psh $0102

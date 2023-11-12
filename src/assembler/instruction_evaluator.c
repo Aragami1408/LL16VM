@@ -183,7 +183,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 				inst->type_size = 3;
 
 				int result = evaluate_expression(lit, label_map);	
-				sprintf(inst->single_lit, "%04x", result); 
+				snprintf(inst->single_lit, 5, "%04x", result); 
 			}
 			else {
 				
@@ -200,7 +200,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					}
 					else if (strstr(lit->tag, "square_bracket_expr")) {
 						int result = evaluate_expression(lit, label_map);
-						sprintf(inst->lit_reg.lit, "%04x", result);
+						snprintf(inst->lit_reg.lit, 5, "%04x", result);
 					}
 
 					strcpy(inst->lit_reg.reg, reg->contents);
@@ -236,7 +236,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					}
 					else if (strstr(lit->tag, "square_bracket_expr")) {
 						int result = evaluate_expression(lit, label_map);
-						sprintf(inst->lit_reg.lit, "%04x", result);
+						snprintf(inst->lit_reg.lit, 5, "%04x", result);
 					}
 
 
@@ -256,7 +256,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					else {
 						mpc_ast_t *expr = instruction_type->children[3];
 						int result = evaluate_expression(expr, label_map);
-						sprintf(inst->reg_mem.mem, "%04x", result);
+						snprintf(inst->reg_mem.mem, 5, "%04x", result);
 					}
 
 				}
@@ -275,7 +275,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					else {
 						mpc_ast_t *expr = instruction_type->children[1];
 						int result = evaluate_expression(expr, label_map);
-						sprintf(inst->reg_mem.mem, "%04x", result);
+						snprintf(inst->reg_mem.mem, 5, "%04x", result);
 
 						mpc_ast_t *reg = instruction_type->children[3];
 						strcpy(inst->reg_mem.reg, reg->contents);
@@ -293,7 +293,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					}
 					else if (strstr(lit->tag, "square_bracket_expr")) {
 						int result = evaluate_expression(lit, label_map);
-						sprintf(inst->lit_mem.lit, "%04x", result);
+						snprintf(inst->lit_mem.lit, 5, "%04x", result);
 					}
 
 					if (instruction_type->children_num < 4) {
@@ -303,7 +303,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					else {
 						mpc_ast_t *mem = instruction_type->children[3];
 						int result = evaluate_expression(mem, label_map);
-						sprintf(inst->lit_mem.mem, "%04x", result);
+						snprintf(inst->lit_mem.mem, 5, "%04x", result);
 					}
 				}
 				else if (strstr(instruction_type->tag, "reg_ptr_reg")) {
@@ -330,7 +330,7 @@ parser_instruction_t *evaluate_instruction(mpc_parser_t *parser, const char *fil
 					}
 					else if (strstr(lit->tag, "square_bracket_expr")) {
 						int result = evaluate_expression(lit, label_map);
-						sprintf(inst->lit_mem.lit, "%04x", result);
+						snprintf(inst->lit_mem.lit, 5, "%04x", result);
 					}
 
 					strcpy(inst->lit_off_reg.reg1, reg1->contents);

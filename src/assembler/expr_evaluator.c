@@ -31,7 +31,7 @@ void free_token_list(token_list_t* token_list) {
 }
 
 operator_stack_t *create_operator_stack(size_t capacity) {
-    operator_stack_t *stack = (operator_stack_t *) malloc(sizeof(operator_stack_t *));
+    operator_stack_t *stack = (operator_stack_t *) malloc(sizeof(operator_stack_t));
 
     if (stack) {
 	stack->stack = (token_t *) malloc(capacity * sizeof(token_t));
