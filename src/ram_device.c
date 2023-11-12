@@ -4,7 +4,7 @@ ram_device_t ram_device_init() {
     ram_device_t self;
 
     for(int i = 0; i < 256*256; i++) {
-        self.memory[i] = 0;
+        self.memory[i] = 0x00;
     }
 
     return self;
