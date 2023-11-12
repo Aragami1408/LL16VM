@@ -32,6 +32,7 @@ typedef struct {
 } cpu_t;
 
 cpu_t *cpu_init(memmapper_t *memory);
+void cpu_reset(cpu_t *cpu);
 void cpu_free(cpu_t *cpu);
 
 void cpu_debug(cpu_t *cpu);

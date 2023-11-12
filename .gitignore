@@ -1,8 +1,8 @@
-LL16VM64
-LL16VM64.exe
 *.o
 .DS_Store
 .vscode/
 .codechecker/
 src/.DS_Store
 src/assembler/parser.dSYM/Contents/Resources/DWARF/parser
+ll16vm_assembler
+ll16vm_emulator

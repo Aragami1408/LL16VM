@@ -25,6 +25,17 @@ cpu_t *cpu_init(memmapper_t *memory) {
 	return cpu;
 }
 
+void cpu_reset(cpu_t *cpu) {
+	for(int i = 0; i < CPU_REG_COUNT; i++) {
+		cpu->registers[i] = 0;
+	}
+	cpu->registers[CPU_REG_SP] = 0xffff - 1;
+	cpu->registers[CPU_REG_FP] = 0xffff - 1;
+	cpu->is_halt = false;
+	cpu->stackframe_size = 0;
+
+}
+
 void cpu_free(cpu_t *cpu) {
 	free(cpu);
 }
@@ -401,7 +412,7 @@ void cpu_execute(cpu_t *cpu, u8 instruction) {
 		case CAL_LIT: {
 			const u16 address = cpu_fetch16(cpu);
 			cpu_stackPushState(cpu);
-			cpu->registers[CPU_REG_IP] = address;
+			cpu->registers[CPU_REG_IP] = address+1;
 		} break;
 		case CAL_REG: {
 			const u8 register_index = cpu_fetch(cpu);

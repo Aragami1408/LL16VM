@@ -11,21 +11,32 @@
 #   pacman -S mingw-w64-i686-SDL2
 #
 
+CC = gcc
 CXX = g++
 #CXX = clang++
 
-EXE = LL16VM64
+EMULATOR = ll16vm_emulator
+ASSEMBLER = ll16vm_assembler
+
 INC_DIR = src
+ASM_DIR = src/assembler
 IMGUI_DIR = externals/imgui/
+
 SOURCES = $(INC_DIR)/main.cpp $(INC_DIR)/cpu.c $(INC_DIR)/memory_mapper.c $(INC_DIR)/ram_device.c $(INC_DIR)/screen_device.c
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer2.cpp
+
+ASM_SOURCES = $(ASM_DIR)/assembler.c $(ASM_DIR)/common_parser.c $(ASM_DIR)/expr_evaluator.c $(ASM_DIR)/expr_parser.c $(ASM_DIR)/instruction_evaluator.c $(ASM_DIR)/instruction_parser.c $(ASM_DIR)/label_evaluator.c $(ASM_DIR)/mpc.c $(ASM_DIR)/utils.c
+
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+ASM_OBJS = $(addsuffix .o, $(basename $(notdir $(ASM_SOURCES))))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
-CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
-CXXFLAGS += -ggdb -fsanitize=address,undefined,alignment -Wall -Wformat -Wcast-align -Wno-logical-op-parentheses -Wconversion -std=c++11
+CFLAGS = -ggdb -Wall -Wformat -Wcast-align -Wconversion
+
+CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -I$(INC_DIR)
+CXXFLAGS += -ggdb -Wall -Wformat -Wcast-align -Wconversion -std=c++11
 LIBS =
 
 ##---------------------------------------------------------------------
@@ -48,7 +59,6 @@ ifeq ($(UNAME_S), Linux) #LINUX
 	LIBS += $(LINUX_GL_LIBS) -ldl `sdl2-config --libs`
 
 	CXXFLAGS += `sdl2-config --cflags`
-	CFLAGS = $(CXXFLAGS)
 endif
 
 ifeq ($(UNAME_S), Darwin) #APPLE
@@ -58,7 +68,6 @@ ifeq ($(UNAME_S), Darwin) #APPLE
 
 	CXXFLAGS += `sdl2-config --cflags`
 	CXXFLAGS += -I/usr/local/include -I/opt/local/include
-	CFLAGS = $(CXXFLAGS)
 endif
 
 ifeq ($(OS), Windows_NT)
@@ -67,12 +76,14 @@ ifeq ($(OS), Windows_NT)
 
 	CXXFLAGS += -mconsole
     CXXFLAGS += `pkg-config --cflags sdl2`
-    CFLAGS = $(CXXFLAGS)
 endif
 
 ##---------------------------------------------------------------------
 ## BUILD RULES
 ##---------------------------------------------------------------------
+
+%.o:$(ASM_DIR)/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o:$(INC_DIR)/%.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -86,11 +97,15 @@ endif
 %.o:$(IMGUI_DIR)/backends/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-all: $(EXE)
+all: $(EMULATOR) $(ASSEMBLER)
 	@echo Build complete for $(ECHO_MESSAGE)
 
-$(EXE): $(OBJS)
+$(EMULATOR): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+$(ASSEMBLER): $(ASM_OBJS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	
+
 clean:
-	rm -f $(EXE) $(OBJS)
+	rm -f $(EMULATOR) $(ASSEMBLER) $(OBJS)

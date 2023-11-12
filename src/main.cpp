@@ -20,8 +20,8 @@
 	#error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
 #endif
 
-constexpr int SCREEN_WIDTH = 1280;
-constexpr int SCREEN_HEIGHT = 720;
+constexpr int SCREEN_WIDTH = 1600;
+constexpr int SCREEN_HEIGHT = 900;
 
 bool parse_hex_array(char *input, u8 *output) {
 	int index = 0;
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      
-	io.FontGlobalScale = 1.2f;
+	io.FontGlobalScale = 1.4f;
 
 	ImGui::StyleColorsDark();
 
@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Reset")) {
-				cpu->registers[CPU_REG_IP] = 0;
+				cpu_reset(cpu);
 			}
 			ImGui::End();
 		}
